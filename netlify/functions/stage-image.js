@@ -67,12 +67,13 @@ Return this exact shape:
 }
 
 // ── Build multipart for OpenAI image edits ───────────────────────────────────
-function buildMultipart(boundary, imageBuffer, imageMime, prompt) {
+function buildMultipart(boundary, imageBuffer, imageMime, prompt, quality) {
   const parts = [];
   parts.push(`--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\ngpt-image-1`);
   parts.push(`--${boundary}\r\nContent-Disposition: form-data; name="prompt"\r\n\r\n${prompt}`);
   parts.push(`--${boundary}\r\nContent-Disposition: form-data; name="n"\r\n\r\n1`);
   parts.push(`--${boundary}\r\nContent-Disposition: form-data; name="size"\r\n\r\n1024x1024`);
+  parts.push(`--${boundary}\r\nContent-Disposition: form-data; name="quality"\r\n\r\n${quality || "low"}`);
   parts.push(`--${boundary}\r\nContent-Disposition: form-data; name="output_format"\r\n\r\npng`);
 
   const textBuf = Buffer.from(parts.join("\r\n") + "\r\n", "utf8");
@@ -112,13 +113,13 @@ exports.handler = async (event) => {
     // ── ACTION: stage image ────────────────────────────────────────────────
     if (!openaiKey) return { statusCode: 500, headers, body: JSON.stringify({ error: "OPENAI_API_KEY not configured" }) };
 
-    const { imageBase64, mimeType, stagingPrompt } = body;
+    const { imageBase64, mimeType, stagingPrompt, quality } = body;
     if (!imageBase64 || !stagingPrompt) return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing imageBase64 or stagingPrompt" }) };
 
     const imageBuffer = Buffer.from(imageBase64, "base64");
     const imageMime = mimeType || "image/jpeg";
     const boundary = "----FormBoundary" + Math.random().toString(36).slice(2);
-    const formData = buildMultipart(boundary, imageBuffer, imageMime, stagingPrompt);
+    const formData = buildMultipart(boundary, imageBuffer, imageMime, stagingPrompt, quality || "low");
 
     const result = await httpsRequest({
       hostname: "api.openai.com",

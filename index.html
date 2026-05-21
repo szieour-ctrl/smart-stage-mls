@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Stage AI™ — SZREG Virtual Staging</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --ink: #1a1714;
+  --cream: #f7f4ef;
+  --warm: #e8e0d4;
+  --gold: #b8975a;
+  --gold-light: #d4b87a;
+  --muted: #7a6f63;
+  --danger: #c0392b;
+  --success: #2d6a4f;
+  --border: #ddd5c8;
+  --shadow: 0 2px 20px rgba(26,23,20,0.08);
+  --shadow-lg: 0 8px 40px rgba(26,23,20,0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--ink);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.header-brand {
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--gold);
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+.header-brand span { color: #fff; font-style: italic; }
+.header-badge {
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+/* ── LAYOUT ── */
+.app { max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
+
+/* ── PANELS ── */
+.panel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+.panel-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.panel-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+  letter-spacing: 0.01em;
+}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: 4px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--cream);
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--gold);
+  background: #faf7f2;
+}
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+.upload-zone-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.upload-zone-hint { font-size: 0.75rem; color: var(--muted); }
+
+/* ── THUMBNAIL GRID ── */
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.thumb-item {
+  position: relative;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  aspect-ratio: 4/3;
+  background: var(--warm);
+}
+.thumb-item img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.thumb-item .thumb-label {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(26,23,20,0.75);
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 3px 6px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.thumb-item .thumb-remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  background: rgba(192,57,43,0.85);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 20px; height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.thumb-item:hover .thumb-remove { display: flex; }
+.thumb-item.active { border-color: var(--gold); }
+
+/* ── INTAKE ── */
+.intake-question {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+.intake-step-badge {
+  display: inline-block;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+.option-list { display: flex; flex-direction: column; gap: 8px; }
+.option-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.option-btn:hover {
+  border-color: var(--gold);
+  background: #faf7f2;
+}
+.option-btn.selected {
+  border-color: var(--gold);
+  background: #faf7f2;
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+.option-letter {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gold);
+  min-width: 18px;
+  padding-top: 1px;
+}
+.option-content { flex: 1; }
+.option-label { font-weight: 500; }
+.option-desc { font-size: 0.78rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  height: 3px;
+  background: var(--warm);
+  border-radius: 2px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  transition: width 0.4s ease;
+}
+
+/* ── SESSION SUMMARY ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+.summary-chip {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 12px;
+}
+.summary-chip-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.summary-chip-val { font-size: 0.88rem; font-weight: 500; color: var(--ink); margin-top: 2px; }
+
+/* ── ROOM QUEUE ── */
+.room-queue { display: flex; flex-direction: column; gap: 12px; }
+.room-card {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+.room-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+}
+.room-card-thumb {
+  width: 60px; height: 45px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+.room-card-info { flex: 1; }
+.room-card-name { font-weight: 500; font-size: 0.88rem; }
+.room-card-status { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+.room-card-status.pending { color: var(--muted); }
+.room-card-status.processing { color: var(--gold); }
+.room-card-status.done { color: var(--success); }
+.room-card-status.error { color: var(--danger); }
+.room-card-actions { display: flex; gap: 6px; }
+
+/* ── RESULT VIEWER ── */
+.result-viewer {
+  padding: 16px;
+}
+.result-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 600px) {
+  .result-pair { grid-template-columns: 1fr; }
+}
+.result-img-wrap { position: relative; }
+.result-img-wrap img {
+  width: 100%;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.result-img-badge {
+  position: absolute;
+  top: 8px; left: 8px;
+  background: rgba(26,23,20,0.82);
+  color: #fff;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.result-img-badge.staged { background: rgba(184,151,90,0.92); color: var(--ink); }
+
+.result-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 3px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+.btn-primary {
+  background: var(--gold);
+  color: var(--ink);
+}
+.btn-primary:hover { background: var(--gold-light); }
+.btn-primary:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+.btn-outline {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 12px;
+  font-size: 0.75rem;
+}
+.btn-ghost:hover { color: var(--ink); }
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-sm { padding: 7px 14px; font-size: 0.75rem; }
+.btn-icon { font-size: 0.9rem; }
+
+/* ── MLS DISCLOSURE BADGE ── */
+.mls-disclosure-note {
+  background: #fff8e7;
+  border: 1px solid #f0d080;
+  border-radius: 3px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: #7a6000;
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* ── SPINNER ── */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--warm);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SECTION DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* ── HIDDEN ── */
+.hidden { display: none !important; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 9999;
+  max-width: 320px;
+}
+#toast.show { opacity: 1; pointer-events: auto; }
+#toast.error { background: var(--danger); }
+#toast.success { background: var(--success); }
+
+/* ── INTAKE NAV ── */
+.intake-nav { display: flex; gap: 10px; margin-top: 20px; }
+
+/* ── COMPLIANCE BAR ── */
+.compliance-bar {
+  background: var(--ink);
+  color: var(--gold);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 6px;
+}
+
+/* ── SIDE BY SIDE CANVAS (hidden) ── */
+#sbs-canvas { display: none; }
+</style>
+</head>
+<body>
+
+<div class="compliance-bar">MLS Compliance Mode Active — Original Image Always Displayed First</div>
+
+<header class="header">
+  <div class="header-brand">Smart Stage <span>AI™</span></div>
+  <div class="header-badge">SZREG Listing Tools</div>
+</header>
+
+<canvas id="sbs-canvas"></canvas>
+
+<div class="app">
+
+  <!-- ══ STEP 0: UPLOAD ══ -->
+  <div id="step-upload" class="panel">
+    <div class="panel-title">Upload Listing Photos</div>
+    <div class="panel-sub">Upload all listing photos for this session. Originals are locked in memory — they cannot be lost or replaced by generated images.</div>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept="image/*" multiple />
+      <div class="upload-icon">📁</div>
+      <div class="upload-zone-text">Drop listing photos here or click to browse</div>
+      <div class="upload-zone-hint">JPEG, PNG, WEBP — multiple files accepted</div>
+    </div>
+
+    <div id="thumb-grid" class="thumb-grid"></div>
+
+    <div id="upload-actions" class="hidden" style="margin-top:20px;display:flex;gap:10px;align-items:center;">
+      <button class="btn btn-primary" id="btn-start-intake" onclick="startIntake()">
+        Begin Session Setup →
+      </button>
+      <span id="upload-count-label" style="font-size:0.8rem;color:var(--muted);"></span>
+    </div>
+  </div>
+
+  <!-- ══ STEP 1–7: INTAKE ══ -->
+  <div id="step-intake" class="panel hidden">
+    <div class="progress-bar"><div class="progress-fill" id="intake-progress" style="width:0%"></div></div>
+    <div id="intake-body"></div>
+    <div class="intake-nav" id="intake-nav"></div>
+  </div>
+
+  <!-- ══ SESSION SUMMARY + ROOM QUEUE ══ -->
+  <div id="step-staging" class="hidden">
+
+    <div class="panel">
+      <div class="panel-title">Session Design DNA</div>
+      <div class="panel-sub">All staging in this session will use these settings. Upload photos and stage one room at a time.</div>
+      <div class="summary-grid" id="summary-grid"></div>
+      <div class="mls-disclosure-note">
+        ⚖️ <span><strong>MetroList Rule 11.6.1 Active:</strong> Every staged image will include "Virtually Staged" disclosure. Original unaltered photo must be published immediately before the staged version in the MLS listing.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Room Staging Queue</div>
+      <div class="panel-sub">Select a photo to stage. Each room is processed individually — your original is always preserved.</div>
+
+      <div class="room-queue" id="room-queue"></div>
+
+      <div style="margin-top:16px;">
+        <button class="btn btn-outline btn-sm" onclick="showStep('step-upload'); resetSession();">+ Add More Photos</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const SESSION = {
+  originals: [],   // { id, name, base64, mimeType, dataUrl }
+  intake: {},      // answers keyed by step
+  rooms: [],       // { id, originalId, status, stagedBase64, prompt }
+};
+
+// ════════════════════════════════════════════
+// INTAKE QUESTIONS
+// ════════════════════════════════════════════
+const INTAKE_STEPS = [
+  {
+    key: 'buyer',
+    question: 'Who is the most likely buyer for this property?',
+    options: [
+      { letter:'A', label:'Gen Z First-Time Buyer',   desc:'Trend-forward minimalist, Japandi, clean aesthetic, flexible lifestyle spaces.' },
+      { letter:'B', label:'Young Professional',        desc:'Sophisticated modern, functional luxury, career-driven lifestyle cues.' },
+      { letter:'C', label:'Millennial Family',         desc:'Organic modern, bright airy, family functionality, cozy textures.' },
+      { letter:'D', label:'Gen X Executive',           desc:'Warm contemporary luxury, masculine sophistication, statement pieces.' },
+      { letter:'E', label:'Luxury Move-Up Buyer',      desc:'High-end editorial, RH-inspired, investment-grade finishes.' },
+      { letter:'F', label:'Boomer Downsizer',          desc:'Transitional warm luxury, resort comfort, ease-of-living focus.' },
+      { letter:'G', label:'Active Adult 55+',          desc:'Resort-style, open pathways, warm luxury, indoor-outdoor living.' },
+      { letter:'H', label:'Investor',                  desc:'Neutral broad-appeal staging, maximum marketability.' },
+    ]
+  },
+  {
+    key: 'feeling',
+    question: 'What feeling should the home create for this buyer?',
+    options: [
+      { letter:'A', label:'Warm & Inviting',      desc:'Layered textures, soft tones, fireplace-ready comfort.' },
+      { letter:'B', label:'Calm Luxury',           desc:'Serene neutrals, quiet sophistication, spa-like stillness.' },
+      { letter:'C', label:'Modern Sophistication', desc:'Clean lines, bold contrast, refined restraint.' },
+      { letter:'D', label:'Resort-Style Living',   desc:'Vacation-inspired ease, outdoor connection, hospitality warmth.' },
+      { letter:'E', label:'Bright & Airy',         desc:'Light-flooded, fresh whites, open and expansive.' },
+      { letter:'F', label:'Editorial Luxury',      desc:'Magazine-quality staging, curated and aspirational.' },
+    ]
+  },
+  {
+    key: 'style',
+    question: 'Choose the overall design style.',
+    options: [
+      { letter:'A', label:'Organic Modern',      desc:'Warm contemporary with natural woods, layered neutrals, and relaxed upscale living.' },
+      { letter:'B', label:'RH Luxury',           desc:'High-end styling with oversized furnishings, rich textures, and dramatic sophistication.' },
+      { letter:'C', label:'Contemporary',        desc:'Clean modern lines, minimal clutter, and refined upscale simplicity.' },
+      { letter:'D', label:'Japandi',             desc:'Minimalist Scandinavian + Japanese design with calm spaces and natural materials.' },
+      { letter:'E', label:'Transitional',        desc:'Balanced blend of traditional warmth and modern simplicity — broad market appeal.' },
+      { letter:'F', label:'Coastal California',  desc:'Light airy interiors with soft neutrals, organic textures, and relaxed indoor-outdoor living.' },
+    ]
+  },
+  {
+    key: 'intensity',
+    question: 'How elevated should the staging feel?',
+    options: [
+      { letter:'A', label:'Light MLS Staging',      desc:'Minimal furniture, maximum realism — ideal for broad buyer appeal.' },
+      { letter:'B', label:'Luxury Market Ready',     desc:'Upscale and believable — the recommended default.' },
+      { letter:'C', label:'Editorial Luxury',        desc:'Magazine-quality presentation — best for luxury listings.' },
+      { letter:'D', label:'Builder Model Home',      desc:'Fully furnished lifestyle showcase — high density staging.' },
+    ]
+  },
+  {
+    key: 'palette',
+    question: 'Choose the overall color direction.',
+    options: [
+      { letter:'A', label:'Warm Neutrals',      desc:'Oat, ivory, mushroom, warm taupe, walnut — timeless luxury.' },
+      { letter:'B', label:'Bright Airy',        desc:'Crisp whites, light wood, fresh and expansive.' },
+      { letter:'C', label:'Earth Tones',        desc:'Terracotta, sage, clay, linen — grounded and organic.' },
+      { letter:'D', label:'Soft Luxury',        desc:'Blush, champagne, warm grey — refined and feminine.' },
+      { letter:'E', label:'Moody Executive',    desc:'Charcoal, espresso, cognac leather, dark walnut.' },
+      { letter:'F', label:'Organic Natural',    desc:'Linen, natural oak, matte black accents, stone tones.' },
+    ]
+  },
+  {
+    key: 'exterior',
+    question: 'Would you like exterior enhancement applied?',
+    options: [
+      { letter:'A', label:'None',                    desc:'Interior staging only.' },
+      { letter:'B', label:'Golden Hour',             desc:'Warm directional sunlight, long soft shadows, subtle cinematic warmth.' },
+      { letter:'C', label:'Twilight',                desc:'Realistic blue-hour sky, warm interior window glow, luxury curb appeal.' },
+      { letter:'D', label:'Landscape Enhancement',   desc:'Fresh mulch, green lawn, trimmed hedges, seasonal color.' },
+    ]
+  },
+  {
+    key: 'mls',
+    question: 'Will these images be used for MLS or public real estate marketing?',
+    options: [
+      { letter:'A', label:'Yes — MLS & Public Marketing', desc:'MLS Safe Mode activated. All compliance rules enforced.' },
+      { letter:'B', label:'No — Internal / Seller Preview', desc:'Standard staging. Disclosure labels still recommended.' },
+    ]
+  },
+];
+
+let currentIntakeStep = 0;
+
+// ════════════════════════════════════════════
+// UPLOAD HANDLING
+// ════════════════════════════════════════════
+const fileInput = document.getElementById('file-input');
+const uploadZone = document.getElementById('upload-zone');
+const thumbGrid  = document.getElementById('thumb-grid');
+
+uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', () => handleFiles(Array.from(fileInput.files)));
+
+function handleFiles(files) {
+  const images = files.filter(f => f.type.startsWith('image/'));
+  if (!images.length) { showToast('No image files found.', 'error'); return; }
+
+  images.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      const base64  = dataUrl.split(',')[1];
+      const id = 'orig_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+      SESSION.originals.push({ id, name: file.name, base64, mimeType: file.type, dataUrl });
+      renderThumb({ id, name: file.name, dataUrl });
+      updateUploadUI();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderThumb({ id, name, dataUrl }) {
+  const item = document.createElement('div');
+  item.className = 'thumb-item';
+  item.dataset.id = id;
+  item.innerHTML = `
+    <img src="${dataUrl}" alt="${name}" />
+    <div class="thumb-label">${name}</div>
+    <button class="thumb-remove" onclick="removeOriginal('${id}', event)">×</button>
+  `;
+  thumbGrid.appendChild(item);
+}
+
+function removeOriginal(id, e) {
+  e.stopPropagation();
+  SESSION.originals = SESSION.originals.filter(o => o.id !== id);
+  document.querySelector(`.thumb-item[data-id="${id}"]`)?.remove();
+  updateUploadUI();
+}
+
+function updateUploadUI() {
+  const n = SESSION.originals.length;
+  const actions = document.getElementById('upload-actions');
+  const label   = document.getElementById('upload-count-label');
+  if (n > 0) {
+    actions.classList.remove('hidden');
+    actions.style.display = 'flex';
+    label.textContent = `${n} photo${n !== 1 ? 's' : ''} loaded`;
+  } else {
+    actions.classList.add('hidden');
+  }
+}
+
+// ════════════════════════════════════════════
+// INTAKE
+// ════════════════════════════════════════════
+function startIntake() {
+  if (SESSION.originals.length === 0) { showToast('Please upload at least one photo.', 'error'); return; }
+  showStep('step-intake');
+  currentIntakeStep = 0;
+  renderIntakeStep();
+}
+
+function renderIntakeStep() {
+  const step = INTAKE_STEPS[currentIntakeStep];
+  const pct  = Math.round(((currentIntakeStep) / INTAKE_STEPS.length) * 100);
+  document.getElementById('intake-progress').style.width = pct + '%';
+
+  const selected = SESSION.intake[step.key];
+
+  const body = document.getElementById('intake-body');
+  body.innerHTML = `
+    <div class="intake-step-badge">Step ${currentIntakeStep + 1} of ${INTAKE_STEPS.length}</div>
+    <div class="intake-question">${step.question}</div>
+    <div class="option-list">
+      ${step.options.map(opt => `
+        <button class="option-btn ${selected === opt.letter ? 'selected' : ''}"
+          onclick="selectIntakeOption('${step.key}', '${opt.letter}', '${escHtml(opt.label)}')">
+          <div class="option-letter">${opt.letter}.</div>
+          <div class="option-content">
+            <div class="option-label">${opt.label}</div>
+            ${opt.desc ? `<div class="option-desc">${opt.desc}</div>` : ''}
+          </div>
+        </button>
+      `).join('')}
+    </div>
+  `;
+
+  const nav = document.getElementById('intake-nav');
+  nav.innerHTML = `
+    ${currentIntakeStep > 0 ? `<button class="btn btn-outline btn-sm" onclick="intakeBack()">← Back</button>` : ''}
+    <button class="btn btn-primary btn-sm" id="btn-intake-next"
+      onclick="intakeNext()"
+      ${selected ? '' : 'disabled'}>
+      ${currentIntakeStep < INTAKE_STEPS.length - 1 ? 'Next →' : 'Begin Staging →'}
+    </button>
+  `;
+}
+
+function selectIntakeOption(key, letter, label) {
+  SESSION.intake[key] = letter;
+  SESSION.intake[key + '_label'] = label;
+  renderIntakeStep();
+}
+
+function intakeNext() {
+  const step = INTAKE_STEPS[currentIntakeStep];
+  if (!SESSION.intake[step.key]) { showToast('Please select an option.', 'error'); return; }
+  if (currentIntakeStep < INTAKE_STEPS.length - 1) {
+    currentIntakeStep++;
+    renderIntakeStep();
+  } else {
+    finishIntake();
+  }
+}
+
+function intakeBack() {
+  if (currentIntakeStep > 0) { currentIntakeStep--; renderIntakeStep(); }
+}
+
+function finishIntake() {
+  buildSummary();
+  buildRoomQueue();
+  showStep('step-staging');
+}
+
+// ════════════════════════════════════════════
+// SUMMARY
+// ════════════════════════════════════════════
+const SUMMARY_KEYS = [
+  { key:'buyer_label',     label:'Buyer Profile' },
+  { key:'feeling_label',   label:'Desired Feeling' },
+  { key:'style_label',     label:'Design Style' },
+  { key:'intensity_label', label:'Staging Level' },
+  { key:'palette_label',   label:'Color Direction' },
+  { key:'exterior_label',  label:'Exterior Mode' },
+  { key:'mls_label',       label:'MLS Compliance' },
+];
+
+function buildSummary() {
+  const grid = document.getElementById('summary-grid');
+  grid.innerHTML = SUMMARY_KEYS.map(s => `
+    <div class="summary-chip">
+      <div class="summary-chip-label">${s.label}</div>
+      <div class="summary-chip-val">${SESSION.intake[s.key] || '—'}</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════
+// ROOM QUEUE
+// ════════════════════════════════════════════
+function buildRoomQueue() {
+  SESSION.rooms = SESSION.originals.map(orig => ({
+    id: 'room_' + orig.id,
+    originalId: orig.id,
+    status: 'pending',
+    stagedBase64: null,
+    prompt: null,
+  }));
+  renderRoomQueue();
+}
+
+function renderRoomQueue() {
+  const queue = document.getElementById('room-queue');
+  queue.innerHTML = SESSION.rooms.map(room => {
+    const orig = SESSION.originals.find(o => o.id === room.originalId);
+    if (!orig) return '';
+
+    const statusLabel = {
+      pending: 'Ready to stage',
+      processing: 'Generating...',
+      done: '✓ Staged',
+      error: '⚠ Error — retry available',
+    }[room.status];
+
+    const actionsHtml = (() => {
+      if (room.status === 'pending' || room.status === 'error') {
+        return `<button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>`;
+      }
+      if (room.status === 'processing') {
+        return `<button class="btn btn-outline btn-sm" disabled><span class="spinner"></span> Generating</button>`;
+      }
+      if (room.status === 'done') {
+        return `
+          <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
+          <button class="btn btn-outline btn-sm" onclick="downloadStaged('${room.id}')">↓ Staged</button>
+          <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${room.id}')">↓ Side-by-Side</button>
+          <button class="btn btn-ghost btn-sm" onclick="restageRoom('${room.id}')">Re-Stage</button>
+        `;
+      }
+      return '';
+    })();
+
+    const resultHtml = room.status === 'done' ? `
+      <div class="result-viewer">
+        <div class="result-pair">
+          <div class="result-img-wrap">
+            <img src="${orig.dataUrl}" alt="Original" />
+            <div class="result-img-badge">Original</div>
+          </div>
+          <div class="result-img-wrap">
+            <img src="data:image/png;base64,${room.stagedBase64}" alt="Staged" />
+            <div class="result-img-badge staged">Virtually Staged</div>
+          </div>
+        </div>
+        <div class="mls-disclosure-note" style="font-size:0.73rem;">
+          ⚖️ MLS Upload Order: <strong>Original first → Staged second.</strong> Label staged image "Virtually Staged" in Matrix.
+        </div>
+      </div>
+    ` : '';
+
+    return `
+      <div class="room-card" id="card-${room.id}">
+        <div class="room-card-header">
+          <img class="room-card-thumb" src="${orig.dataUrl}" alt="${orig.name}" />
+          <div class="room-card-info">
+            <div class="room-card-name">${orig.name}</div>
+            <div class="room-card-status ${room.status}">${statusLabel}</div>
+          </div>
+          <div class="room-card-actions">${actionsHtml}</div>
+        </div>
+        ${resultHtml}
+      </div>
+    `;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// STAGING PROMPT BUILDER
+// ════════════════════════════════════════════
+function buildStagingPrompt(roomName) {
+  const i = SESSION.intake;
+
+  const mlsRule = i.mls === 'A'
+    ? 'Maintain strict MLS-safe realism. Preserve all architectural elements exactly.'
+    : 'Maintain photorealistic staging quality.';
+
+  const exteriorNote = i.exterior !== 'A'
+    ? `Apply ${i.exterior_label} exterior enhancement if this is an exterior photo.`
+    : '';
+
+  return `Professional real estate virtual staging. Transform this vacant room photo into a realistically staged listing image.
+
+PRESERVE EXACTLY: all architectural elements, room dimensions, ceiling height, window placement, doorways, flooring direction, cabinetry, permanent fixtures, and camera perspective. Do not alter, add, or remove any structural element.
+
+STAGING TARGET:
+- Buyer: ${i.buyer_label}
+- Desired feeling: ${i.feeling_label}
+- Design style: ${i.style_label}
+- Staging intensity: ${i.intensity_label}
+- Color direction: ${i.palette_label}
+
+STAGING RULES:
+- Add appropriate furniture, rugs, lighting, art, and décor only
+- Maintain realistic furniture scale and circulation clearance
+- Favor restrained upscale realism over excessive staging
+- Avoid oversized furniture, excessive accessories, or hotel-lobby styling
+- Maintain natural lighting consistency from existing windows
+- All reflective surfaces (mirrors, glass, appliances) must show physically accurate reflections
+- Staging must appear photorealistic and suitable for MLS marketing
+
+${mlsRule}
+${exteriorNote}
+
+Output: A single photorealistic staged room image. Label it VIRTUALLY STAGED.`.trim();
+}
+
+// ════════════════════════════════════════════
+// STAGE ROOM
+// ════════════════════════════════════════════
+async function stageRoom(roomId) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  const orig = SESSION.originals.find(o => o.id === room.originalId);
+  if (!room || !orig) return;
+
+  room.status = 'processing';
+  room.prompt = buildStagingPrompt(orig.name);
+  renderRoomQueue();
+
+  try {
+    const res = await fetch('/.netlify/functions/stage-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: orig.base64,
+        mimeType: orig.mimeType,
+        stagingPrompt: room.prompt,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      room.status = 'error';
+      renderRoomQueue();
+      showToast('Staging error: ' + (data.error || 'Unknown error'), 'error');
+      return;
+    }
+
+    room.stagedBase64 = data.stagedBase64;
+    room.status = 'done';
+    renderRoomQueue();
+    showToast('Room staged successfully!', 'success');
+
+  } catch (err) {
+    room.status = 'error';
+    renderRoomQueue();
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
+
+function restageRoom(roomId) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  if (room) { room.status = 'pending'; room.stagedBase64 = null; renderRoomQueue(); }
+}
+
+// ════════════════════════════════════════════
+// DOWNLOADS
+// ════════════════════════════════════════════
+function downloadOriginal(roomId) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  const orig = SESSION.originals.find(o => o.id === room.originalId);
+  if (!orig) return;
+  triggerDownload(orig.dataUrl, 'ORIGINAL_' + orig.name.replace(/\.[^.]+$/, '') + '.jpg');
+}
+
+function downloadStaged(roomId) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  const orig = SESSION.originals.find(o => o.id === room.originalId);
+  if (!room.stagedBase64) return;
+  const url = 'data:image/png;base64,' + room.stagedBase64;
+  triggerDownload(url, 'STAGED_VirtuallyStaged_' + orig.name.replace(/\.[^.]+$/, '') + '.png');
+}
+
+function downloadSideBySide(roomId) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  const orig = SESSION.originals.find(o => o.id === room.originalId);
+  if (!room.stagedBase64) return;
+
+  const canvas = document.getElementById('sbs-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const origImg   = new Image();
+  const stagedImg = new Image();
+  let loaded = 0;
+
+  const onLoad = () => {
+    loaded++;
+    if (loaded < 2) return;
+
+    const W = 2048, H = 600;
+    const padding = 16;
+    canvas.width  = W;
+    canvas.height = H + 80;
+
+    // background
+    ctx.fillStyle = '#1a1714';
+    ctx.fillRect(0, 0, W, canvas.height);
+
+    // images
+    const imgW = (W - padding * 3) / 2;
+    ctx.drawImage(origImg,   padding,         padding, imgW, H);
+    ctx.drawImage(stagedImg, padding * 2 + imgW, padding, imgW, H);
+
+    // labels
+    ctx.fillStyle = 'rgba(26,23,20,0.75)';
+    ctx.fillRect(padding, padding, 120, 28);
+    ctx.fillRect(padding * 2 + imgW, padding, 160, 28);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '500 13px DM Sans, sans-serif';
+    ctx.fillText('ORIGINAL', padding + 10, padding + 19);
+
+    ctx.fillStyle = '#b8975a';
+    ctx.fillText('VIRTUALLY STAGED', padding * 2 + imgW + 10, padding + 19);
+
+    // footer
+    ctx.fillStyle = '#b8975a';
+    ctx.font = '400 12px DM Sans, sans-serif';
+    ctx.fillText('Smart Stage AI™  |  SZREG  |  ' + orig.name, padding, H + padding + 20);
+
+    ctx.fillStyle = '#7a6f63';
+    ctx.font = '400 10px DM Sans, sans-serif';
+    ctx.fillText('Virtually staged for illustrative purposes. Original unaltered image available upon request. MetroList Rule 11.6.1 compliant.', padding, H + padding + 40);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    triggerDownload(dataUrl, 'SBS_' + orig.name.replace(/\.[^.]+$/, '') + '_Comparison.jpg');
+  };
+
+  origImg.onload = onLoad;
+  stagedImg.onload = onLoad;
+  origImg.src  = orig.dataUrl;
+  stagedImg.src = 'data:image/png;base64,' + room.stagedBase64;
+}
+
+function triggerDownload(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  a.click();
+}
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+function showStep(id) {
+  ['step-upload','step-intake','step-staging'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById(id);
+  if (target) target.classList.remove('hidden');
+}
+
+function resetSession() {
+  SESSION.originals = [];
+  SESSION.intake = {};
+  SESSION.rooms = [];
+  document.getElementById('thumb-grid').innerHTML = '';
+  document.getElementById('upload-actions').classList.add('hidden');
+  fileInput.value = '';
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => { t.className = ''; }, 3500);
+}
+
+function escHtml(s) {
+  return (s||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+showStep('step-upload');
+</script>
+</body>
+</html>

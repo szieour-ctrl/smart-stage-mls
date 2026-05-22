@@ -779,6 +779,14 @@ function getRoomTypeRules(roomName){
   return ROOM_STAGING_RULES[roomName]||'';
 }
 
+// ── Global staging props standards ──────────────────────────────────────────
+const PROPS_RULES = `STAGING PROPS STANDARDS — APPLY TO ALL ROOMS:
+COUNTERTOPS & SURFACES: Minimal styling only — maximum one tray OR one bowl per counter section, one vase or single stem, one small plant maximum per surface. Do NOT add multiple accessories, fruit bowls, appliance collections, or cluttered styling to any counter or surface.
+WALL ART: Maximum ONE piece of art per wall. Art must be properly sized — width should be 50-75% of the wall or furniture piece below it. Do NOT add art over windows, on structural columns, or on walls too narrow to support it properly.
+AREA RUGS: Area rugs only — no runners, no layered rugs, no hall runners. Rugs must be sized correctly — in living areas front legs of all seating must sit on the rug. Do NOT add rugs in kitchens, bathrooms, or laundry rooms.
+PLANTS: Maximum one plant per room — floor plant OR table plant, not both. No fake-looking oversized plants.
+GENERAL: Less is more. Every item must earn its place. When in doubt, leave it out.`;
+
 // FIX #3: Reflection rule injected into every prompt
 const REFLECTION_RULE = `REFLECTION & LIGHTING ACCURACY — STRICTLY ENFORCE:
 - All mirrors, glass, windows, appliances, and polished surfaces must show ONLY what is physically visible from the camera angle in this exact photo
@@ -826,14 +834,23 @@ function buildInteriorPrompt(room,iterNote,quality){
   const preserveBlock=buildPreservationBlock(room,iterNote);
   const mlsRule=i.mls==='A'?'MLS SAFE MODE: Preserve all architectural elements exactly as photographed. No structural alterations.':'Maintain photorealistic staging quality.';
   const qualNote=quality==='high'?'Maximum photorealistic quality — luxury editorial, MLS-grade.':quality==='medium'?'High quality photorealistic MLS output.':'Draft quality — focus on correct placement and style direction.';
+  // Spatial block first — highest priority
   return `Professional real estate virtual interior staging.
 ROOM: ${room.roomName}${room.adjacentRooms.length?`\nCONNECTS TO: ${room.adjacentRooms.join(', ')}`:''}
-PRESERVE EXACTLY: room dimensions, ceiling height, windows, doors, flooring direction, cabinetry, countertops, appliances, permanent fixtures, architectural details, camera perspective. Do not alter any of these.
+${spatialBlock?'FURNITURE PLACEMENT — FOLLOW EXACTLY:\n'+spatialBlock+'\n':''}
+${shotFocus?shotFocus+'\n':''}
+PRESERVE ABSOLUTELY — NO EXCEPTIONS:
+- Kitchen island/peninsula: countertop shape, base geometry, ALL surfaces must remain GEOMETRICALLY IDENTICAL to original — do not round, warp, melt, or reshape any edge, corner, or surface
+- All cabinetry, countertops, appliances, windows, doors, flooring, ceiling height, architectural details, camera perspective must remain IDENTICAL
+- Do NOT add, move, or alter any permanent fixture or structural element
 STAGING: Buyer: ${i.buyer_label} · Feeling: ${i.feeling_label} · Style: ${i.style_label} · Intensity: ${i.intensity_label} · Color: ${i.palette_label}
-Add furniture, rugs, art, plants, décor appropriate to this specific room type only. Realistic furniture scale. Restrained upscale realism — avoid overcrowding.
+Add furniture, rugs, art, plants, décor appropriate to room type only. Realistic scale. Restrained upscale realism.
 ${REFLECTION_RULE}
-${roomRules?roomRules+'\n':''}${spatialBlock}${shotFocus}${continuity}
-${preserveBlock?preserveBlock+'\n':''}${mlsRule} ${qualNote}
+${PROPS_RULES}
+${roomRules?roomRules+'\n':''}
+${continuity}
+${preserveBlock?preserveBlock+'\n':''}
+${mlsRule} ${qualNote}
 Embed "VIRTUALLY STAGED" text in lower portion.`.trim();
 }
 
@@ -865,7 +882,8 @@ LIGHTING ONLY: Blue-hour sky, warm interior window glow, subtle path lighting, l
 // ══════════════════════════════════════════
 async function callStageAPIOnce(imageBase64,mimeType,prompt,quality){
   const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),28000);
+  // 24-second abort — just under Netlify's 26s cap so we get a clean error
+  const timer=setTimeout(()=>controller.abort(),24000);
   try{
     const res=await fetch('/.netlify/functions/stage-image-start',{
       method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
@@ -876,10 +894,12 @@ async function callStageAPIOnce(imageBase64,mimeType,prompt,quality){
       const txt=await res.text();
       if(txt.trim().startsWith('<'))throw new Error('TIMEOUT');
       let d;try{d=JSON.parse(txt);}catch(e){throw new Error('TIMEOUT');}
+      if(d.retryable)throw new Error('TIMEOUT'); // OpenAI overloaded — retry
       throw new Error(d.error||'API error');
     }
     const data=await res.json();
     if(data.error)throw new Error(data.error);
+    if(!data.stagedBase64)throw new Error('TIMEOUT'); // empty response = timeout
     return data.stagedBase64;
   }catch(err){
     clearTimeout(timer);
@@ -891,13 +911,13 @@ async function callStageAPI(imageBase64,mimeType,prompt,quality,attempt=1){
   try{
     return await callStageAPIOnce(imageBase64,mimeType,prompt,quality);
   }catch(err){
-    if(err.message==='TIMEOUT'&&attempt<=3){
-      console.log('Timeout — auto-retrying (attempt '+attempt+'/3)...');
-      showToast('Timeout — auto-retrying ('+attempt+'/3)...');
-      await new Promise(r=>setTimeout(r,1500));
+    if(err.message==='TIMEOUT'&&attempt<=4){
+      const delay=attempt*2000; // increasing backoff: 2s, 4s, 6s, 8s
+      showToast('OpenAI timeout — retrying ('+attempt+'/4)...');
+      await new Promise(r=>setTimeout(r,delay));
       return callStageAPI(imageBase64,mimeType,prompt,quality,attempt+1);
     }
-    if(err.message==='TIMEOUT')throw new Error('Request timed out after 3 attempts. OpenAI is slow right now — please try again in a moment.');
+    if(err.message==='TIMEOUT')throw new Error('OpenAI is taking too long right now. Please wait 30 seconds and try again — this is an OpenAI server issue, not your photo.');
     throw err;
   }
 }

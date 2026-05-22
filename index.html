@@ -670,7 +670,9 @@ function renderRoomQueue(){
     // ── INTERIOR ──
     const statusLabel={pending:'Ready to stage — click photo to set Shot Focus',processing:'Generating draft...',done:'✓ Draft complete',error:'⚠ Error — retry available'}[room.status];
     const actions=(()=>{
-      if(room.status==='pending'||room.status==='error')return `<button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>`;
+      if(room.status==='pending'||room.status==='error')return `
+        <button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>
+        <button class="btn btn-sm" style="background:#4a5fa5;color:#fff;" onclick="stageRoomReplicate('${room.id}')" title="Test Replicate SDXL engine with smart mask">🧪 Test Replicate</button>`;
       if(room.status==='processing')return `<button class="btn btn-outline btn-sm" disabled><span class="spinner"></span> Generating</button>`;
       if(room.status==='done')return `
         <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
@@ -695,25 +697,19 @@ function renderRoomQueue(){
       <button class="btn btn-primary btn-sm" onclick="iterateRoom('${room.id}')">Re-Stage Draft</button>
     </div>`:'';
     const finalHtml=room.status==='done'?renderFinalPanel(room.id,null):'';
-    // Replicate test panel
+    // Replicate result panel — button now in header actions, this shows result/progress only
     const repBtn=(()=>{
-      if(!room.replicateStatus||room.replicateStatus==='error')
-        return `<div style="background:#f0f4ff;border-top:1px solid #c8d4f0;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#4a5fa5;">🧪 Engine Test</span>
-          <span style="font-size:0.75rem;color:var(--muted);">Run same photo through Replicate SDXL Inpainting for comparison</span>
-          <button class="btn btn-sm" style="background:#4a5fa5;color:#fff;" onclick="stageRoomReplicate('${room.id}')">Test Replicate Engine</button>
-          ${room.replicateStatus==='error'?'<span style="font-size:0.72rem;color:var(--danger);">⚠ Error — retry available</span>':''}
-        </div>`;
+      if(!room.replicateStatus) return ''; // button is in header actions now
       if(room.replicateStatus==='processing')
         return `<div style="background:#f0f4ff;border-top:1px solid #c8d4f0;padding:10px 16px;display:flex;align-items:center;gap:8px;">
           <span class="spinner" style="border-top-color:#4a5fa5;border-color:#c8d4f0;"></span>
-          <span style="font-size:0.8rem;color:#4a5fa5;">Replicate SDXL generating — typically 5-15 seconds...</span>
+          <span style="font-size:0.8rem;color:#4a5fa5;">Step 1: Claude Vision analyzing photo for precise mask... Step 2: Replicate SDXL inpainting locked regions...</span>
         </div>`;
       if(room.replicateStatus==='done'&&room.replicateBase64)
         return `<div style="padding:16px;background:#f0f4ff;border-top:1px solid #c8d4f0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <span style="background:#4a5fa5;color:#fff;font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;">Replicate SDXL</span>
-            <span style="font-size:0.72rem;color:var(--muted);">Compare with gpt-image-1 draft above — which engine gives better results?</span>
+            <span style="font-size:0.72rem;color:var(--muted);">${room.replicateMaskInfo||"Compare with gpt-image-1 draft above — which engine gives better results?"}</span>
           </div>
           <div class="result-pair">
             <div class="result-img-wrap"><img src="${orig.dataUrl}" /><div class="result-img-badge">Original</div></div>
@@ -723,6 +719,11 @@ function renderRoomQueue(){
             <button class="btn btn-outline btn-sm" onclick="downloadB64('data:image/jpeg;base64,'+SESSION.rooms.find(r=>r.id==='${room.id}').replicateBase64,'REPLICATE_${room.roomName.replace(/\s+/g,'')}_'+bName(getOrigName('${room.id}'))+'.jpg')">↓ Replicate Result</button>
             <button class="btn btn-ghost btn-sm" onclick="SESSION.rooms.find(r=>r.id==='${room.id}').replicateStatus=null;renderRoomQueue();">Run Again</button>
           </div>
+        </div>`;
+      if(room.replicateStatus==='error')
+        return `<div style="background:#f0f4ff;border-top:1px solid #c8d4f0;padding:10px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:0.72rem;color:var(--danger);">⚠ Replicate error</span>
+          <button class="btn btn-sm" style="background:#4a5fa5;color:#fff;" onclick="SESSION.rooms.find(r=>r.id==='${room.id}').replicateStatus=null;renderRoomQueue();">Retry</button>
         </div>`;
       return '';
     })();
@@ -963,6 +964,8 @@ async function stageRoomReplicate(roomId){
     room.replicateBase64=b64;room.replicateStatus='done';
     await resizeToMatch(room,orig,null,'replicateBase64',b64);
     showToast('✓ Replicate SDXL complete — compare below.','success');
+    // Store mask info for display
+    if(data.roomDescription) room.replicateMaskInfo = data.roomDescription + (data.stagingNote?' · '+data.stagingNote:'') + ' ('+data.maskRegions+' fill region'+(data.maskRegions!==1?'s':'')+')';
     renderRoomQueue();
   }catch(err){room.replicateStatus='error';renderRoomQueue();showToast('Replicate error: '+err.message,'error');}
 }

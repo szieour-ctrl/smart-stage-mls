@@ -6,12 +6,7 @@
 <title>Smart Stage AI™ — SZREG Virtual Staging</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
-:root {
-  --ink:#1a1714;--cream:#f7f4ef;--warm:#e8e0d4;
-  --gold:#b8975a;--gold-light:#d4b87a;--muted:#7a6f63;
-  --danger:#c0392b;--success:#2d6a4f;--border:#ddd5c8;
-  --sky:#3a7ca5;--shadow:0 2px 20px rgba(26,23,20,0.08);
-}
+:root{--ink:#1a1714;--cream:#f7f4ef;--warm:#e8e0d4;--gold:#b8975a;--gold-light:#d4b87a;--muted:#7a6f63;--danger:#c0392b;--success:#2d6a4f;--border:#ddd5c8;--sky:#3a7ca5;--shadow:0 2px 20px rgba(26,23,20,0.08);}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;}
 .header{background:var(--ink);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.3);}
@@ -23,8 +18,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .panel{background:#fff;border:1px solid var(--border);border-radius:4px;padding:28px 32px;margin-bottom:24px;box-shadow:var(--shadow);}
 .panel-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:6px;}
 .panel-sub{font-size:0.82rem;color:var(--muted);margin-bottom:20px;}
-
-/* Upload */
 .upload-zone{border:2px dashed var(--border);border-radius:4px;padding:36px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--cream);position:relative;}
 .upload-zone:hover,.upload-zone.drag-over{border-color:var(--gold);background:#faf7f2;}
 .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
@@ -41,8 +34,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .thumb-item.is-floorplan .thumb-label{background:rgba(184,151,90,0.92);color:var(--ink);font-weight:600;}
 .fp-tag-btn{position:absolute;top:4px;left:4px;background:rgba(26,23,20,0.72);color:#fff;border:none;border-radius:2px;font-size:0.55rem;padding:2px 5px;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;}
 .thumb-item.is-floorplan .fp-tag-btn{background:rgba(184,151,90,0.92);color:var(--ink);}
-
-/* Intake */
 .progress-bar{height:3px;background:var(--warm);border-radius:2px;margin-bottom:20px;overflow:hidden;}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width 0.4s ease;}
 .intake-step-badge{display:inline-block;background:var(--gold);color:var(--ink);font-size:0.65rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;margin-bottom:12px;}
@@ -55,8 +46,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .option-label{font-weight:500;}
 .option-desc{font-size:0.78rem;color:var(--muted);margin-top:2px;line-height:1.4;}
 .intake-nav{display:flex;gap:10px;margin-top:20px;}
-
-/* Mapping */
 .room-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 @media(max-width:640px){.room-map-grid{grid-template-columns:1fr;}}
 .room-map-list{display:flex;flex-direction:column;gap:8px;}
@@ -69,14 +58,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .photo-assign-thumb:hover{opacity:0.8;}
 .photo-assign-name{font-size:0.78rem;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .photo-assign-select{font-size:0.8rem;padding:4px 8px;border:1px solid var(--border);border-radius:3px;background:#fff;color:var(--ink);cursor:pointer;flex-shrink:0;}
-
-/* Summary */
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px;}
 .summary-chip{background:var(--cream);border:1px solid var(--border);border-radius:3px;padding:8px 12px;}
 .summary-chip-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);}
 .summary-chip-val{font-size:0.88rem;font-weight:500;color:var(--ink);margin-top:2px;}
-
-/* Room queue */
 .room-queue{display:flex;flex-direction:column;gap:14px;}
 .room-card{border:1px solid var(--border);border-radius:4px;overflow:hidden;background:#fff;}
 .room-card.is-anchor{border-color:var(--gold);}
@@ -93,34 +78,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .room-card-status.processing{color:var(--gold);}
 .room-card-status.done{color:var(--success);}
 .room-card-status.error{color:var(--danger);}
-.shot-focus-badge{font-size:0.68rem;color:var(--sky);margin-top:2px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;}
+.shot-focus-badge{font-size:0.68rem;color:var(--sky);margin-top:2px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px;}
 .anchor-badge{background:var(--gold);color:var(--ink);font-size:0.58rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;}
 .ext-badge{background:var(--sky);color:#fff;font-size:0.58rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;}
 .ref-badge{background:#888;color:#fff;font-size:0.58rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;}
 .room-card-actions{display:flex;gap:6px;flex-wrap:wrap;}
-
-/* Mode toggle */
 .mode-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:3px;overflow:hidden;flex-shrink:0;}
 .mode-toggle-btn{padding:5px 12px;font-size:0.72rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;border:none;cursor:pointer;background:#fff;color:var(--muted);transition:all 0.15s;}
 .mode-toggle-btn.active-int{background:var(--ink);color:#fff;}
 .mode-toggle-btn.active-ext{background:var(--sky);color:#fff;}
-
-/* Shot focus panel */
-.shot-focus-panel{background:#edf5fb;border-top:1px solid #cce0f0;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;}
-.shot-focus-icon{font-size:1.2rem;margin-top:2px;flex-shrink:0;}
-.shot-focus-content{flex:1;}
-.shot-focus-label{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--sky);margin-bottom:4px;}
-.shot-focus-input{width:100%;border:1px solid #cce0f0;border-radius:3px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--ink);background:#fff;resize:none;}
-.shot-focus-input:focus{outline:none;border-color:var(--sky);}
-.shot-focus-hint{font-size:0.72rem;color:var(--muted);margin-top:4px;line-height:1.4;}
-
-/* Final quality panel */
-.final-quality-panel{background:#f4faf7;border-top:1px solid #b8ddd0;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-.final-quality-label{font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--success);flex-shrink:0;}
-.quality-select{font-size:0.85rem;padding:6px 10px;border:1px solid #b8ddd0;border-radius:3px;background:#fff;color:var(--ink);cursor:pointer;}
-.final-badge{background:var(--success);color:#fff;font-size:0.58rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;}
-
-/* Exterior panel */
 .ext-panel{padding:16px;background:#f4f8fc;border-top:1px solid #cce0f0;}
 .ext-panel-title{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--sky);font-weight:600;margin-bottom:12px;}
 .ext-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:14px;}
@@ -130,46 +96,41 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .ext-option input[type=checkbox]{margin-top:2px;accent-color:var(--sky);flex-shrink:0;}
 .ext-option-label{font-weight:500;font-size:0.85rem;}
 .ext-option-desc{font-size:0.74rem;color:var(--muted);margin-top:2px;line-height:1.35;}
-.ext-enhancements{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
-.ext-enhancement-item{background:#fff;border:1px solid #cce0f0;border-radius:3px;overflow:hidden;}
+.ext-enhancement-item{background:#fff;border:1px solid #cce0f0;border-radius:3px;overflow:hidden;margin-top:10px;}
 .ext-enhancement-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#edf5fb;border-bottom:1px solid #cce0f0;flex-wrap:wrap;gap:6px;}
 .ext-enhancement-name{font-size:0.8rem;font-weight:500;color:var(--sky);}
-
-/* Result viewer */
 .result-viewer{padding:16px;}
 .result-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
 @media(max-width:580px){.result-pair{grid-template-columns:1fr;}}
 .result-img-wrap{position:relative;}
 .result-img-wrap img{width:100%;border-radius:3px;border:1px solid var(--border);display:block;cursor:pointer;}
-.result-img-wrap img:hover{opacity:0.92;}
 .result-img-badge{position:absolute;top:8px;left:8px;background:rgba(26,23,20,0.82);color:#fff;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:2px;}
 .result-img-badge.staged{background:rgba(184,151,90,0.92);color:var(--ink);}
 .result-img-badge.ext-enhanced{background:rgba(58,124,165,0.92);color:#fff;}
-.result-img-badge.final{background:rgba(45,106,79,0.92);color:#fff;}
-
-/* Iterate panel */
+.result-img-badge.final-badge{background:rgba(45,106,79,0.92);color:#fff;}
 .iterate-panel{background:var(--cream);border-top:1px solid var(--border);padding:14px 16px;display:flex;gap:8px;align-items:flex-end;}
 .iterate-input{flex:1;border:1px solid var(--border);border-radius:3px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:0.85rem;color:var(--ink);background:#fff;resize:none;min-height:38px;}
 .iterate-input:focus{outline:none;border-color:var(--gold);}
 .iterate-hint{font-size:0.72rem;color:var(--muted);margin-top:4px;}
-
+.final-panel{background:#f4faf7;border-top:1px solid #b8ddd0;padding:14px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.final-panel-label{font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--success);flex-shrink:0;}
+.quality-select{font-size:0.85rem;padding:6px 10px;border:1px solid #b8ddd0;border-radius:3px;background:#fff;color:var(--ink);cursor:pointer;}
+.final-progress{font-size:0.8rem;color:var(--success);display:flex;align-items:center;gap:8px;}
 /* Lightbox */
 #lightbox{position:fixed;inset:0;background:rgba(10,8,6,0.92);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;}
 #lightbox.hidden{display:none!important;}
-.lightbox-inner{background:#fff;border-radius:6px;overflow:hidden;max-width:860px;width:100%;max-height:90vh;display:flex;flex-direction:column;}
-.lightbox-img-wrap{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#111;min-height:0;}
-.lightbox-img-wrap img{max-width:100%;max-height:55vh;object-fit:contain;display:block;}
-.lightbox-body{padding:20px 24px;}
-.lightbox-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;margin-bottom:6px;}
-.lightbox-sub{font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+.lightbox-inner{background:#fff;border-radius:6px;overflow:hidden;max-width:860px;width:100%;max-height:92vh;display:flex;flex-direction:column;}
+.lightbox-img-wrap{flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#111;max-height:52vh;overflow:hidden;}
+.lightbox-img-wrap img{max-width:100%;max-height:52vh;object-fit:contain;display:block;}
+.lightbox-body{padding:18px 24px;overflow-y:auto;}
+.lightbox-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;margin-bottom:5px;}
+.lightbox-sub{font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.5;}
 .lightbox-input{width:100%;border:1px solid var(--border);border-radius:3px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.9rem;color:var(--ink);background:var(--cream);resize:none;}
 .lightbox-input:focus{outline:none;border-color:var(--gold);}
 .lightbox-examples{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
 .lightbox-example{background:var(--warm);border:1px solid var(--border);border-radius:12px;font-size:0.72rem;padding:3px 10px;cursor:pointer;color:var(--muted);transition:all 0.15s;}
 .lightbox-example:hover{border-color:var(--gold);color:var(--ink);}
-.lightbox-footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 24px;border-top:1px solid var(--border);background:var(--cream);}
-
-/* Buttons */
+.lightbox-footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 24px;border-top:1px solid var(--border);background:var(--cream);flex-shrink:0;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:3px;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;letter-spacing:0.04em;cursor:pointer;border:none;transition:all 0.15s;text-transform:uppercase;}
 .btn-primary{background:var(--gold);color:var(--ink);}
 .btn-primary:hover{background:var(--gold-light);}
@@ -186,7 +147,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .btn-ghost{background:transparent;color:var(--muted);padding:8px 12px;font-size:0.75rem;}
 .btn-ghost:hover{color:var(--ink);}
 .btn-sm{padding:7px 13px;font-size:0.75rem;}
-
 .mls-disclosure-note{background:#fff8e7;border:1px solid #f0d080;border-radius:3px;padding:10px 14px;font-size:0.78rem;color:#7a6000;margin-top:12px;display:flex;gap:8px;align-items:flex-start;}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--warm);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;}
 .spinner-sky{border-color:#cce0f0;border-top-color:var(--sky);}
@@ -200,7 +160,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 #sbs-canvas{display:none;}
 .section-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;font-weight:500;}
 .fp-analyzing{display:flex;align-items:center;gap:10px;padding:14px 0;color:var(--muted);font-size:0.85rem;}
-.draft-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin-bottom:6px;}
+.tier-label{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;padding:2px 6px;border-radius:2px;}
+.tier-draft{background:#e8e0d4;color:#7a6f63;}
+.tier-final{background:rgba(45,106,79,0.15);color:var(--success);}
 </style>
 </head>
 <body>
@@ -217,8 +179,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
     <div class="lightbox-img-wrap"><img id="lightbox-img" src="" alt="" /></div>
     <div class="lightbox-body">
       <div class="lightbox-title" id="lightbox-title">Shot Focus Instructions</div>
-      <div class="lightbox-sub">Tell the AI what to emphasize in this photo. This overrides the default room-filling behavior — critical for open-concept shots showing multiple spaces.</div>
-      <textarea class="lightbox-input" id="lightbox-input" rows="3" placeholder='e.g. "Focus on the Great Room seating area — the kitchen visible in background is secondary" or "This is the Dining Room — do not over-furnish the living area visible behind it"'></textarea>
+      <div class="lightbox-sub">Tell the AI what to emphasize in this photo. Critical for open-concept shots showing multiple spaces — without this the AI tries to fill every visible room equally.</div>
+      <textarea class="lightbox-input" id="lightbox-input" rows="3" placeholder='e.g. "Focus on the Great Room seating area — the kitchen in the background is secondary and should not be over-furnished"'></textarea>
       <div class="lightbox-examples" id="lightbox-examples"></div>
     </div>
     <div class="lightbox-footer">
@@ -229,15 +191,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 </div>
 
 <div class="app">
-  <!-- STEP 0: UPLOAD -->
   <div id="step-upload" class="panel">
     <div class="panel-title">Upload Listing Photos</div>
-    <div class="panel-sub">Upload all listing photos. Tag your floor plan if available. Hover thumbnails and click "Set as Floor Plan" to tag it — or select "Floor Plan" in the room dropdown during assignment.</div>
+    <div class="panel-sub">Upload all listing photos. Tag your floor plan using the "Set as Floor Plan" button on any thumbnail, or select "Floor Plan" in the room dropdown. Click any photo thumbnail to set Shot Focus instructions.</div>
     <div class="upload-zone" id="upload-zone">
       <input type="file" id="file-input" accept="image/*" multiple />
       <div class="upload-icon">📁</div>
       <div class="upload-zone-text">Drop listing photos here or click to browse</div>
-      <div class="upload-zone-hint">JPEG, PNG, WEBP · Tag floor plan · Exterior photos auto-detected · Click any photo to set Shot Focus</div>
+      <div class="upload-zone-hint">JPEG, PNG, WEBP · Tag floor plan · Exterior photos auto-detected · Click thumbnail to set Shot Focus</div>
     </div>
     <div id="thumb-grid" class="thumb-grid"></div>
     <div id="upload-actions" class="hidden" style="margin-top:20px;display:flex;gap:10px;align-items:center;">
@@ -246,14 +207,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
     </div>
   </div>
 
-  <!-- STEP 1-6: INTAKE -->
   <div id="step-intake" class="panel hidden">
     <div class="progress-bar"><div class="progress-fill" id="intake-progress" style="width:0%"></div></div>
     <div id="intake-body"></div>
     <div class="intake-nav" id="intake-nav"></div>
   </div>
 
-  <!-- STEP: ROOM MAPPING -->
   <div id="step-mapping" class="panel hidden">
     <div class="panel-title">Room Assignment</div>
     <div id="mapping-body"></div>
@@ -262,16 +221,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
     </div>
   </div>
 
-  <!-- STAGING -->
   <div id="step-staging" class="hidden">
     <div class="panel">
       <div class="panel-title">Session Design DNA</div>
       <div class="summary-grid" id="summary-grid"></div>
-      <div class="mls-disclosure-note">⚖️ <span><strong>MetroList Rule 11.6.1 Active:</strong> Every staged/enhanced image includes disclosure labeling. Publish original immediately before altered version in Matrix.</span></div>
+      <div class="mls-disclosure-note">⚖️ <span><strong>MetroList Rule 11.6.1 Active:</strong> Every staged/enhanced image includes disclosure. Publish original immediately before altered version in Matrix.</span></div>
     </div>
     <div class="panel">
       <div class="panel-title">Room Staging Queue</div>
-      <div class="panel-sub">Click any photo thumbnail to open it full-size and set Shot Focus instructions. Draft stages run at Low quality — fast and cheap. Use "Generate Final" when ready for MLS-quality downloads.</div>
+      <div class="panel-sub">Click any photo thumbnail to set Shot Focus. Draft stages are low quality — iterate freely. Generate Final for MLS-ready downloads.</div>
       <div class="room-queue" id="room-queue"></div>
       <div style="margin-top:16px;">
         <button class="btn btn-outline btn-sm" onclick="showStep('step-upload');resetSession();">+ New Session</button>
@@ -292,86 +250,114 @@ const ROOM_OPTIONS = [
   "Office","Loft","Flex Room","Laundry","Powder Room","Garage",
   "Covered Patio","Backyard","Exterior Front","Pool Area","Side Yard","Other"
 ];
-
 const EXTERIOR_KEYWORDS = ["exterior","backyard","patio","front yard","side yard","pool","garden","outdoor","landscape","driveway","covered patio"];
 
 const EXT_ENHANCEMENTS = [
-  {id:"outdoor-living",label:"Outdoor Living Staging",   icon:"🪑",desc:"Patio furniture, dining set, fire pit, planters, umbrellas.",mlsTag:"Virtually Staged — Outdoor Furnishings"},
-  {id:"landscape",     label:"Landscape Enhancement",    icon:"🌿",desc:"Fresh lawn, trimmed hedges, seasonal flowers, clean mulch.",mlsTag:"Digitally Enhanced — Landscaping"},
-  {id:"golden-hour",   label:"Golden Hour",              icon:"🌅",desc:"Warm sunset lighting, long soft shadows, cinematic warmth.",mlsTag:"Digitally Enhanced — Golden Hour Lighting"},
-  {id:"twilight",      label:"Twilight",                 icon:"🌙",desc:"Blue-hour sky, warm window glow, luxury curb appeal.",mlsTag:"Digitally Enhanced — Twilight"},
+  {id:"outdoor-living",label:"Outdoor Living Staging",icon:"🪑",desc:"Patio furniture, dining set, fire pit, planters.",mlsTag:"Virtually Staged — Outdoor Furnishings"},
+  {id:"landscape",label:"Landscape Enhancement",icon:"🌿",desc:"Fresh lawn, trimmed hedges, seasonal flowers, mulch.",mlsTag:"Digitally Enhanced — Landscaping"},
+  {id:"golden-hour",label:"Golden Hour",icon:"🌅",desc:"Warm sunset lighting, long soft shadows.",mlsTag:"Digitally Enhanced — Golden Hour Lighting"},
+  {id:"twilight",label:"Twilight",icon:"🌙",desc:"Blue-hour sky, warm window glow, curb appeal.",mlsTag:"Digitally Enhanced — Twilight"},
 ];
 
-// Shot focus example hints by room type
-const SHOT_FOCUS_HINTS = {
-  "Great Room":       ["Focus on the Great Room — kitchen in background is secondary","Emphasize the fireplace wall as the focal point","The open space should feel expansive — avoid overcrowding"],
-  "Kitchen":          ["Focus on the island and kitchen — living area behind is secondary","Emphasize counter space and pendant lighting","Stage bar stools at island — keep great room in background minimal"],
-  "Dining Room":      ["This is the Dining Room — do not over-furnish the living area visible behind","Focus on dining table and chandelier","Keep staging centered on dining space — adjoining rooms secondary"],
-  "Living Room":      ["Focus on the living room seating — kitchen visible behind is secondary","Emphasize the fireplace as the room anchor","Stage a conversational seating arrangement around the focal wall"],
-  "Family Room":      ["Focus on the family room — do not fill the kitchen or entry visible behind","Emphasize comfortable seating facing the TV wall","Keep it warm and livable — this is the everyday gathering space"],
-  "Primary Suite":    ["This is a bedroom — focus on the bed wall as the hero element","Emphasize the suite feel — nightstands, soft lighting, luxury textiles","Keep bathroom door area clean — do not stage the bath visible behind"],
-  "Covered Patio":    ["Focus on the covered patio — backyard behind is secondary","Stage outdoor seating under the covered area only","Emphasize the indoor-outdoor connection"],
-  "Backyard":         ["Focus on the yard space — do not add unrealistic landscaping","Stage outdoor dining or lounge in the main open area","Keep it realistic — this is a Sacramento suburban backyard"],
-  "Exterior Front":   ["This is the front exterior — preserve exact architecture","Focus on curb appeal — driveway and entry are key","Do not alter roofline, windows, or structural elements"],
+// ── Room-type staging rules (Problem 4 fix) ──────────────────────────────────
+const ROOM_STAGING_RULES = {
+  "Primary Bath": `BATHROOM STAGING RULES — STRICTLY ENFORCE:
+- Do NOT place rugs under or around freestanding tubs
+- Do NOT hang art, mirrors, or decor over windows or on window walls
+- Do NOT add towel bars, hooks, or hardware to structural or tiled walls
+- Do NOT place plants on toilet tanks, toilet seats, or inside showers
+- DO add: folded towels on towel bar if one exists, small tray on tub surround or vanity, candle on vanity, simple plant on floor beside vanity only
+- Keep staging minimal — bathrooms should feel clean and spa-like, not cluttered`,
+  "Primary Suite": `BEDROOM STAGING RULES:
+- Bed must be centered on the primary wall — never floating or angled unless room forces it
+- Do NOT place furniture directly in front of windows or block window light
+- Nightstands required on both sides of bed if space allows
+- Do NOT add rugs that extend under the bed and create unrealistic proportions
+- Artwork above headboard must fit the wall width — no oversized art`,
+  "Kitchen": `KITCHEN STAGING RULES:
+- Do NOT add appliances that don't exist (coffee makers, stand mixers) on countertops unless space clearly exists
+- Bar stools at island must match the island height realistically
+- Do NOT hang pot racks or pendants that don't exist in the original photo
+- Keep countertops clean — minimal styling items only`,
+  "Great Room": `GREAT ROOM STAGING RULES:
+- Sofa must face the fireplace or focal wall — never face a blank wall
+- Do NOT block the fireplace hearth with furniture
+- Coffee table must be proportional to the sofa — no oversized or undersized tables
+- Area rug must extend under the front legs of all seating minimum`,
+  "Office": `OFFICE STAGING RULES:
+- Desk must face a wall or window — never floating in the center
+- Do NOT add built-in shelves that don't exist in the photo
+- Keep staging professional — no gaming chairs or casual furniture`,
 };
-const DEFAULT_HINTS = ["Specify which room is the main focus of this shot","Describe what the buyer should notice first","Note any background spaces that should remain understaged"];
+
+const SHOT_FOCUS_HINTS = {
+  "Great Room":["Focus on the Great Room seating area — kitchen in background is secondary","Emphasize the fireplace wall as the focal point — do not over-furnish visible adjacent spaces","The open space should feel expansive — avoid crowding any visible connecting rooms"],
+  "Kitchen":["Focus on the kitchen island — living area behind is secondary and should remain lightly staged","Emphasize counter space and pendant lighting over the island","Stage bar stools at island — keep great room furniture minimal if visible"],
+  "Dining Room":["This is the Dining Room — do not over-furnish the living area visible behind","Focus on dining table and chandelier above it","Keep staging centered on dining space — adjoining rooms are background only"],
+  "Family Room":["Focus on the family room — do not fill the kitchen or entry visible behind","Emphasize comfortable seating facing the TV wall","Keep it warm and livable — this is the everyday gathering space"],
+  "Living Room":["Focus on the living room seating — kitchen visible behind is secondary","Emphasize the fireplace as the room anchor","Stage a conversational seating arrangement around the focal wall"],
+  "Primary Suite":["This is a bedroom — bed wall is the hero element","Emphasize the suite feel — nightstands, soft lighting, luxury textiles","Keep bathroom door area clean — do not stage the bath visible behind"],
+  "Primary Bath":["Focus on the freestanding tub or primary vanity","Keep staging minimal and spa-like — less is more in bathrooms","Do NOT stage the shower interior or place decor on toilet"],
+  "Covered Patio":["Focus on the covered patio — backyard behind is secondary","Stage outdoor seating under the covered area only","Emphasize the indoor-outdoor connection"],
+  "Backyard":["Focus on the main yard space — keep staging realistic","Stage outdoor dining or lounge in the primary open area","Keep it realistic — Sacramento suburban backyard aesthetic"],
+  "Exterior Front":["This is the front exterior — preserve exact architecture","Focus on curb appeal — driveway and entry are key","Do not alter roofline, windows, or structural elements"],
+};
+const DEFAULT_HINTS = ["Specify which room is the main focus","Describe what the buyer should notice first","Note any background spaces that should remain understaged"];
 
 // ══════════════════════════════════════════
-// SESSION STATE
+// SESSION
 // ══════════════════════════════════════════
 const SESSION = {
   originals:[],floorplanRoomMap:null,photoRoomMap:{},
   intake:{},rooms:[],anchorRoomId:null,
 };
-
-// Lightbox state
 let _lbRoomId = null;
 
 // ══════════════════════════════════════════
-// INTAKE QUESTIONS
+// INTAKE
 // ══════════════════════════════════════════
 const INTAKE_STEPS = [
   {key:'buyer',question:'Who is the most likely buyer for this property?',options:[
-    {letter:'A',label:'Gen Z First-Time Buyer',desc:'Trend-forward minimalist, Japandi, clean aesthetic, flexible lifestyle spaces.'},
-    {letter:'B',label:'Young Professional',desc:'Sophisticated modern, functional luxury, career-driven lifestyle cues.'},
-    {letter:'C',label:'Millennial Family',desc:'Organic modern, bright airy, family functionality, cozy textures.'},
-    {letter:'D',label:'Gen X Executive',desc:'Warm contemporary luxury, masculine sophistication, statement pieces.'},
-    {letter:'E',label:'Luxury Move-Up Buyer',desc:'High-end editorial, RH-inspired, investment-grade finishes.'},
-    {letter:'F',label:'Boomer Downsizer',desc:'Transitional warm luxury, resort comfort, ease-of-living focus.'},
-    {letter:'G',label:'Active Adult 55+',desc:'Resort-style, open pathways, warm luxury, indoor-outdoor living.'},
+    {letter:'A',label:'Gen Z First-Time Buyer',desc:'Trend-forward minimalist, Japandi, clean aesthetic.'},
+    {letter:'B',label:'Young Professional',desc:'Sophisticated modern, functional luxury.'},
+    {letter:'C',label:'Millennial Family',desc:'Organic modern, bright airy, family functionality.'},
+    {letter:'D',label:'Gen X Executive',desc:'Warm contemporary luxury, masculine sophistication.'},
+    {letter:'E',label:'Luxury Move-Up Buyer',desc:'High-end editorial, RH-inspired finishes.'},
+    {letter:'F',label:'Boomer Downsizer',desc:'Transitional warm luxury, resort comfort.'},
+    {letter:'G',label:'Active Adult 55+',desc:'Resort-style, open pathways, warm luxury.'},
     {letter:'H',label:'Investor',desc:'Neutral broad-appeal staging, maximum marketability.'},
   ]},
-  {key:'feeling',question:'What feeling should the home create for this buyer?',options:[
+  {key:'feeling',question:'What feeling should the home create?',options:[
     {letter:'A',label:'Warm & Inviting',desc:'Layered textures, soft tones, fireplace-ready comfort.'},
     {letter:'B',label:'Calm Luxury',desc:'Serene neutrals, quiet sophistication, spa-like stillness.'},
     {letter:'C',label:'Modern Sophistication',desc:'Clean lines, bold contrast, refined restraint.'},
-    {letter:'D',label:'Resort-Style Living',desc:'Vacation-inspired ease, outdoor connection, hospitality warmth.'},
+    {letter:'D',label:'Resort-Style Living',desc:'Vacation-inspired ease, outdoor connection.'},
     {letter:'E',label:'Bright & Airy',desc:'Light-flooded, fresh whites, open and expansive.'},
     {letter:'F',label:'Editorial Luxury',desc:'Magazine-quality staging, curated and aspirational.'},
   ]},
   {key:'style',question:'Choose the overall design style.',options:[
-    {letter:'A',label:'Organic Modern',desc:'Warm contemporary with natural woods, layered neutrals, and relaxed upscale living.'},
-    {letter:'B',label:'RH Luxury',desc:'High-end styling with oversized furnishings, rich textures, and dramatic sophistication.'},
-    {letter:'C',label:'Contemporary',desc:'Clean modern lines, minimal clutter, and refined upscale simplicity.'},
-    {letter:'D',label:'Japandi',desc:'Minimalist Scandinavian + Japanese design with calm spaces and natural materials.'},
-    {letter:'E',label:'Transitional',desc:'Balanced blend of traditional warmth and modern simplicity — broad market appeal.'},
-    {letter:'F',label:'Coastal California',desc:'Light airy interiors with soft neutrals, organic textures, and relaxed indoor-outdoor living.'},
+    {letter:'A',label:'Organic Modern',desc:'Warm contemporary with natural woods, layered neutrals.'},
+    {letter:'B',label:'RH Luxury',desc:'High-end styling with oversized furnishings, rich textures.'},
+    {letter:'C',label:'Contemporary',desc:'Clean modern lines, minimal clutter, refined simplicity.'},
+    {letter:'D',label:'Japandi',desc:'Minimalist Scandinavian + Japanese design, calm spaces.'},
+    {letter:'E',label:'Transitional',desc:'Balanced traditional warmth and modern simplicity.'},
+    {letter:'F',label:'Coastal California',desc:'Light airy interiors, soft neutrals, indoor-outdoor living.'},
   ]},
   {key:'intensity',question:'How elevated should the staging feel?',options:[
-    {letter:'A',label:'Light MLS Staging',desc:'Minimal furniture, maximum realism — ideal for broad buyer appeal.'},
-    {letter:'B',label:'Luxury Market Ready',desc:'Upscale and believable — the recommended default.'},
-    {letter:'C',label:'Editorial Luxury',desc:'Magazine-quality presentation — best for luxury listings.'},
-    {letter:'D',label:'Builder Model Home',desc:'Fully furnished lifestyle showcase — high density staging.'},
+    {letter:'A',label:'Light MLS Staging',desc:'Minimal furniture, maximum realism.'},
+    {letter:'B',label:'Luxury Market Ready',desc:'Upscale and believable — recommended default.'},
+    {letter:'C',label:'Editorial Luxury',desc:'Magazine-quality — best for luxury listings.'},
+    {letter:'D',label:'Builder Model Home',desc:'Fully furnished lifestyle showcase.'},
   ]},
   {key:'palette',question:'Choose the overall color direction.',options:[
-    {letter:'A',label:'Warm Neutrals',desc:'Oat, ivory, mushroom, warm taupe, walnut — timeless luxury.'},
+    {letter:'A',label:'Warm Neutrals',desc:'Oat, ivory, mushroom, warm taupe, walnut.'},
     {letter:'B',label:'Bright Airy',desc:'Crisp whites, light wood, fresh and expansive.'},
     {letter:'C',label:'Earth Tones',desc:'Terracotta, sage, clay, linen — grounded and organic.'},
-    {letter:'D',label:'Soft Luxury',desc:'Blush, champagne, warm grey — refined and feminine.'},
+    {letter:'D',label:'Soft Luxury',desc:'Blush, champagne, warm grey.'},
     {letter:'E',label:'Moody Executive',desc:'Charcoal, espresso, cognac leather, dark walnut.'},
-    {letter:'F',label:'Organic Natural',desc:'Linen, natural oak, matte black accents, stone tones.'},
+    {letter:'F',label:'Organic Natural',desc:'Linen, natural oak, matte black accents, stone.'},
   ]},
-  {key:'mls',question:'Will these images be used for MLS or public real estate marketing?',options:[
+  {key:'mls',question:'Will these images be used for MLS or public marketing?',options:[
     {letter:'A',label:'Yes — MLS & Public Marketing',desc:'MLS Safe Mode activated. All compliance rules enforced.'},
     {letter:'B',label:'No — Internal / Seller Preview',desc:'Standard staging. Disclosure labels still recommended.'},
   ]},
@@ -387,7 +373,6 @@ uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classLi
 uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag-over'));
 uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag-over');handleFiles([...e.dataTransfer.files]);});
 fileInput.addEventListener('change',()=>handleFiles([...fileInput.files]));
-
 function handleFiles(files){
   const imgs=files.filter(f=>f.type.startsWith('image/'));
   if(!imgs.length){showToast('No image files found.','error');return;}
@@ -408,8 +393,7 @@ function renderThumb(orig){
   const item=document.createElement('div');
   item.className='thumb-item'+(orig.isFloorplan?' is-floorplan':'');
   item.dataset.id=orig.id;
-  item.innerHTML=`
-    <img src="${orig.dataUrl}" alt="${orig.name}" />
+  item.innerHTML=`<img src="${orig.dataUrl}" alt="${orig.name}" />
     <div class="thumb-label">${orig.isFloorplan?'📐 Floor Plan':orig.name}</div>
     <button class="fp-tag-btn" onclick="toggleFloorplan('${orig.id}',event)">${orig.isFloorplan?'✓ Floor Plan':'Set as Floor Plan'}</button>
     <button class="thumb-remove" onclick="removeOriginal('${orig.id}',event)">×</button>`;
@@ -432,8 +416,7 @@ function removeOriginal(id,e){
 }
 function updateUploadUI(){
   const n=SESSION.originals.length;
-  const actions=document.getElementById('upload-actions');
-  const label=document.getElementById('upload-count-label');
+  const actions=document.getElementById('upload-actions'),label=document.getElementById('upload-count-label');
   if(n>0){actions.classList.remove('hidden');actions.style.display='flex';label.textContent=`${n} photo${n!==1?'s':''} loaded`;}
   else actions.classList.add('hidden');
 }
@@ -473,7 +456,6 @@ function intakeNext(){
   else finishIntake();
 }
 function intakeBack(){if(currentIntakeStep>0){currentIntakeStep--;renderIntakeStep();}}
-
 async function finishIntake(){
   const fp=SESSION.originals.find(o=>o.isFloorplan);
   showStep('step-mapping');
@@ -484,46 +466,34 @@ async function finishIntake(){
 // ══════════════════════════════════════════
 // ROOM MAPPING
 // ══════════════════════════════════════════
-function showMappingAnalyzing(){
-  document.getElementById('mapping-body').innerHTML=`<div class="fp-analyzing"><span class="spinner"></span> Analyzing floor plan — identifying rooms and adjacencies...</div>`;
-}
+function showMappingAnalyzing(){document.getElementById('mapping-body').innerHTML=`<div class="fp-analyzing"><span class="spinner"></span> Analyzing floor plan — identifying rooms and adjacencies...</div>`;}
 async function analyzeFloorplan(fp){
   try{
-    const res=await fetch('/.netlify/functions/stage-image',{method:'POST',headers:{'Content-Type':'application/json'},
+    const res=await fetch('/.netlify/functions/stage-image-start',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'analyze-floorplan',imageBase64:fp.base64,mimeType:fp.mimeType})});
     const data=await res.json();
     if(!res.ok||!data.rooms)throw new Error(data.error||'No room data');
-    SESSION.floorplanRoomMap=data;
-    showMappingWithFloorplan(data.rooms);
+    SESSION.floorplanRoomMap=data;showMappingWithFloorplan(data.rooms);
   }catch(err){showToast('Floor plan analysis failed — switching to manual labeling.','error');showMappingManual();}
 }
 function showMappingWithFloorplan(rooms){
   const photos=SESSION.originals.filter(o=>!o.isFloorplan);
   const roomOpts=rooms.map(r=>`<option value="${r.id}">${r.name}${r.floor?' (Fl.'+r.floor+')':''}</option>`).join('');
   document.getElementById('mapping-body').innerHTML=`
-    <div class="panel-sub" style="margin-bottom:16px;">AI identified <strong>${rooms.length} rooms</strong>. Assign each photo. Click any thumbnail to set Shot Focus instructions for open-concept shots.</div>
+    <div class="panel-sub" style="margin-bottom:16px;">AI identified <strong>${rooms.length} rooms</strong>. Assign each photo. Click any thumbnail to set Shot Focus for open-concept shots.</div>
     <div class="room-map-grid">
-      <div>
-        <div class="section-label">Floor Plan Rooms</div>
-        <div class="room-map-list">
-          ${rooms.map(r=>`<div class="room-map-item">
-            <div class="room-map-name">${r.name}${r.floor?' · Floor '+r.floor:''}</div>
-            ${r.adjacentTo?.length?`<div class="room-map-adj">Adjacent: ${r.adjacentTo.map(aid=>rooms.find(x=>x.id===aid)?.name||aid).join(', ')}</div>`:''}
-          </div>`).join('')}
-        </div>
-      </div>
-      <div>
-        <div class="section-label">Assign Photos to Rooms</div>
-        <div class="photo-assign-list">
-          ${photos.map(p=>`<div class="photo-assign-row">
-            <img class="photo-assign-thumb" src="${p.dataUrl}" alt="${p.name}" onclick="openLightboxMapping('${p.id}')" title="Click to set Shot Focus" />
-            <span class="photo-assign-name">${p.name}</span>
-            <select class="photo-assign-select" onchange="updatePhotoRoom('${p.id}',this.value)">
-              <option value="">— Select room —</option>${roomOpts}
-            </select>
-          </div>`).join('')}
-        </div>
-      </div>
+      <div><div class="section-label">Floor Plan Rooms</div><div class="room-map-list">
+        ${rooms.map(r=>`<div class="room-map-item"><div class="room-map-name">${r.name}${r.floor?' · Floor '+r.floor:''}</div>${r.adjacentTo?.length?`<div class="room-map-adj">Adjacent: ${r.adjacentTo.map(aid=>rooms.find(x=>x.id===aid)?.name||aid).join(', ')}</div>`:''}</div>`).join('')}
+      </div></div>
+      <div><div class="section-label">Assign Photos to Rooms</div><div class="photo-assign-list">
+        ${photos.map(p=>`<div class="photo-assign-row">
+          <img class="photo-assign-thumb" src="${p.dataUrl}" onclick="openLightboxMapping('${p.id}')" title="Click to set Shot Focus" />
+          <span class="photo-assign-name">${p.name}</span>
+          <select class="photo-assign-select" onchange="updatePhotoRoom('${p.id}',this.value)">
+            <option value="">— Select room —</option>${roomOpts}
+          </select>
+        </div>`).join('')}
+      </div></div>
     </div>`;
 }
 function updatePhotoRoom(photoId,roomId){
@@ -532,17 +502,16 @@ function updatePhotoRoom(photoId,roomId){
   if(!room)return;
   const adjNames=(room.adjacentTo||[]).map(aid=>SESSION.floorplanRoomMap.rooms.find(r=>r.id===aid)?.name).filter(Boolean);
   const isExt=EXTERIOR_KEYWORDS.some(k=>room.name.toLowerCase().includes(k));
-  const existing=SESSION.photoRoomMap[photoId]||{};
-  SESSION.photoRoomMap[photoId]={...existing,roomId:room.id,roomName:room.name,adjacentNames:adjNames,isExterior:isExt};
+  SESSION.photoRoomMap[photoId]={...SESSION.photoRoomMap[photoId]||{},roomId:room.id,roomName:room.name,adjacentNames:adjNames,isExterior:isExt};
 }
 function showMappingManual(){
   const photos=SESSION.originals.filter(o=>!o.isFloorplan);
   const roomOpts=ROOM_OPTIONS.map((r,i)=>`<option value="${i===0?'__fp__':r}">${r}</option>`).join('');
   document.getElementById('mapping-body').innerHTML=`
-    <div class="panel-sub" style="margin-bottom:16px;">Label each photo. Select "Floor Plan / Reference Only" for your floorplan — it won't be staged. Click any thumbnail to set Shot Focus for open-concept shots.</div>
+    <div class="panel-sub" style="margin-bottom:16px;">Label each photo. "Floor Plan / Reference Only" marks a photo as reference — it won't be staged. Click thumbnails to set Shot Focus.</div>
     <div class="no-fp-label-list">
       ${photos.map(p=>`<div class="photo-assign-row">
-        <img class="photo-assign-thumb" src="${p.dataUrl}" alt="${p.name}" onclick="openLightboxMapping('${p.id}')" title="Click to set Shot Focus" />
+        <img class="photo-assign-thumb" src="${p.dataUrl}" onclick="openLightboxMapping('${p.id}')" title="Click to set Shot Focus" />
         <span class="photo-assign-name">${p.name}</span>
         <select class="photo-assign-select" onchange="updatePhotoRoomManual('${p.id}',this.value)">
           <option value="">— Label this room —</option>${roomOpts}
@@ -553,20 +522,18 @@ function showMappingManual(){
 function updatePhotoRoomManual(photoId,val){
   if(!val){delete SESSION.photoRoomMap[photoId];return;}
   if(val==='__fp__'){
-    // Mark as floor plan reference
     const orig=SESSION.originals.find(o=>o.id===photoId);
     if(orig)orig.isFloorplan=true;
     SESSION.photoRoomMap[photoId]={roomId:'floorplan',roomName:'Floor Plan',adjacentNames:[],isExterior:false,isReference:true};
     return;
   }
   const isExt=EXTERIOR_KEYWORDS.some(k=>val.toLowerCase().includes(k));
-  const existing=SESSION.photoRoomMap[photoId]||{};
-  SESSION.photoRoomMap[photoId]={...existing,roomId:val.toLowerCase().replace(/\s+/g,'-'),roomName:val,adjacentNames:[],isExterior:isExt,isReference:false};
+  SESSION.photoRoomMap[photoId]={...SESSION.photoRoomMap[photoId]||{},roomId:val.toLowerCase().replace(/\s+/g,'-'),roomName:val,adjacentNames:[],isExterior:isExt,isReference:false};
 }
 function confirmMapping(){buildSummary();buildRoomQueue();showStep('step-staging');}
 
 // ══════════════════════════════════════════
-// LIGHTBOX — SHOT FOCUS
+// LIGHTBOX
 // ══════════════════════════════════════════
 function openLightbox(roomId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
@@ -581,7 +548,6 @@ function openLightbox(roomId){
   document.getElementById('lightbox').classList.remove('hidden');
 }
 function openLightboxMapping(photoId){
-  // During mapping step — open lightbox but save to photoRoomMap shotFocus
   const orig=SESSION.originals.find(o=>o.id===photoId);
   if(!orig)return;
   _lbRoomId='__mapping__:'+photoId;
@@ -601,12 +567,11 @@ function saveShotFocus(){
     const photoId=_lbRoomId.split(':')[1];
     if(!SESSION.photoRoomMap[photoId])SESSION.photoRoomMap[photoId]={};
     SESSION.photoRoomMap[photoId].shotFocus=val;
-    showToast('Shot Focus saved.','success');
   } else {
     const room=SESSION.rooms.find(r=>r.id===_lbRoomId);
     if(room){room.shotFocus=val;renderRoomQueue();}
-    showToast('Shot Focus saved.','success');
   }
+  showToast('Shot Focus saved.','success');
   closeLightbox();
 }
 document.getElementById('lightbox').addEventListener('click',e=>{if(e.target===document.getElementById('lightbox'))closeLightbox();});
@@ -614,46 +579,28 @@ document.getElementById('lightbox').addEventListener('click',e=>{if(e.target===d
 // ══════════════════════════════════════════
 // SUMMARY
 // ══════════════════════════════════════════
-const SUMMARY_KEYS=[
-  {key:'buyer_label',label:'Buyer Profile'},{key:'feeling_label',label:'Desired Feeling'},
-  {key:'style_label',label:'Design Style'},{key:'intensity_label',label:'Staging Level'},
-  {key:'palette_label',label:'Color Direction'},{key:'mls_label',label:'MLS Compliance'},
-];
 function buildSummary(){
-  document.getElementById('summary-grid').innerHTML=SUMMARY_KEYS.map(s=>`
-    <div class="summary-chip"><div class="summary-chip-label">${s.label}</div><div class="summary-chip-val">${SESSION.intake[s.key]||'—'}</div></div>`).join('');
+  const KEYS=[{key:'buyer_label',label:'Buyer Profile'},{key:'feeling_label',label:'Desired Feeling'},{key:'style_label',label:'Design Style'},{key:'intensity_label',label:'Staging Level'},{key:'palette_label',label:'Color Direction'},{key:'mls_label',label:'MLS Compliance'}];
+  document.getElementById('summary-grid').innerHTML=KEYS.map(s=>`<div class="summary-chip"><div class="summary-chip-label">${s.label}</div><div class="summary-chip-val">${SESSION.intake[s.key]||'—'}</div></div>`).join('');
 }
 
 // ══════════════════════════════════════════
-// ROOM QUEUE BUILD
+// ROOM QUEUE
 // ══════════════════════════════════════════
 function buildRoomQueue(){
   const photos=SESSION.originals.filter(o=>!o.isFloorplan);
   SESSION.rooms=photos.map(orig=>{
-    const mapping=SESSION.photoRoomMap[orig.id];
-    return {
-      id:'room_'+orig.id,originalId:orig.id,
-      roomName:mapping?.roomName||orig.name,
-      adjacentRooms:mapping?.adjacentNames||[],
-      isExterior:mapping?.isExterior||false,
-      isReference:mapping?.isReference||false,
-      shotFocus:mapping?.shotFocus||'',
-      status:'pending',stagedBase64:null,iterationNote:'',approvedDNA:null,
-      finalBase64:null,finalStatus:null,
-      extSelections:{},
-    };
+    const m=SESSION.photoRoomMap[orig.id];
+    return {id:'room_'+orig.id,originalId:orig.id,roomName:m?.roomName||orig.name,adjacentRooms:m?.adjacentNames||[],isExterior:m?.isExterior||false,isReference:m?.isReference||false,shotFocus:m?.shotFocus||'',status:'pending',stagedBase64:null,finalBase64:null,finalStatus:null,iterationNote:'',approvedDNA:null,extSelections:{}};
   });
   renderRoomQueue();
 }
-
 function toggleRoomMode(roomId,makeExt){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   if(!room)return;
-  room.isExterior=makeExt;room.status='pending';room.stagedBase64=null;
-  room.finalBase64=null;room.finalStatus=null;room.extSelections={};
+  room.isExterior=makeExt;room.status='pending';room.stagedBase64=null;room.finalBase64=null;room.finalStatus=null;room.extSelections={};
   renderRoomQueue();
 }
-
 function toggleExtSelection(roomId,enhId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   if(!room)return;
@@ -663,186 +610,156 @@ function toggleExtSelection(roomId,enhId){
 }
 
 function renderRoomQueue(){
-  const queue=document.getElementById('room-queue');
-  queue.innerHTML=SESSION.rooms.map(room=>{
+  document.getElementById('room-queue').innerHTML=SESSION.rooms.map(room=>{
     const orig=SESSION.originals.find(o=>o.id===room.originalId);
     if(!orig)return '';
     const isAnchor=SESSION.anchorRoomId===room.id;
 
-    // ── REFERENCE card (floor plan tagged after mapping) ──
-    if(room.isReference){
-      return `<div class="room-card is-reference" id="card-${room.id}">
-        <div class="room-card-header">
-          <img class="room-card-thumb" src="${orig.dataUrl}" />
-          <div class="room-card-info">
-            <div class="room-card-name">${room.roomName} <span class="ref-badge">Reference Only</span></div>
-            <div class="room-card-status pending">Not staged — used for spatial reference</div>
-          </div>
-        </div>
-      </div>`;
-    }
+    if(room.isReference)return `<div class="room-card is-reference" id="card-${room.id}">
+      <div class="room-card-header"><img class="room-card-thumb" src="${orig.dataUrl}" />
+      <div class="room-card-info"><div class="room-card-name">${room.roomName} <span class="ref-badge">Reference Only</span></div>
+      <div class="room-card-status pending">Not staged — spatial reference only</div></div></div></div>`;
 
     const modeToggle=`<div class="mode-toggle">
       <button class="mode-toggle-btn ${!room.isExterior?'active-int':''}" onclick="toggleRoomMode('${room.id}',false)">Interior</button>
       <button class="mode-toggle-btn ${room.isExterior?'active-ext':''}" onclick="toggleRoomMode('${room.id}',true)">Exterior</button>
     </div>`;
+    const sfBadge=room.shotFocus?`<div class="shot-focus-badge">🎯 ${room.shotFocus.slice(0,80)}${room.shotFocus.length>80?'…':''}</div>`:'';
 
-    const shotFocusBadge=room.shotFocus?`<div class="shot-focus-badge">🎯 ${room.shotFocus.slice(0,80)}${room.shotFocus.length>80?'…':''}</div>`:'';
-
-    // ── EXTERIOR card ──
+    // ── EXTERIOR ──
     if(room.isExterior){
-      const selectedEnhIds=Object.keys(room.extSelections);
-      const anySelected=selectedEnhIds.length>0;
-      const anyProcessing=selectedEnhIds.some(id=>room.extSelections[id]?.status==='processing');
-      const runBtn=anyProcessing
-        ?`<button class="btn btn-sky btn-sm" disabled><span class="spinner spinner-sky"></span> Running</button>`
-        :`<button class="btn btn-sky btn-sm" onclick="runExtEnhancements('${room.id}')" ${anySelected?'':'disabled'}>Run Selected</button>`;
-      const extOptionsHtml=EXT_ENHANCEMENTS.map(enh=>{
-        const sel=!!room.extSelections[enh.id];
-        return `<div class="ext-option ${sel?'selected':''}" onclick="toggleExtSelection('${room.id}','${enh.id}')">
-          <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleExtSelection('${room.id}','${enh.id}')" />
-          <div><div class="ext-option-label">${enh.icon} ${enh.label}</div><div class="ext-option-desc">${enh.desc}</div></div>
-        </div>`;
-      }).join('');
-      const enhResultsHtml=EXT_ENHANCEMENTS.filter(enh=>room.extSelections[enh.id]).map(enh=>{
+      const selIds=Object.keys(room.extSelections);
+      const anyProc=selIds.some(id=>room.extSelections[id]?.status==='processing');
+      const runBtn=anyProc?`<button class="btn btn-sky btn-sm" disabled><span class="spinner spinner-sky"></span> Running</button>`
+        :`<button class="btn btn-sky btn-sm" onclick="runExtEnhancements('${room.id}')" ${selIds.length?'':'disabled'}>Run Selected</button>`;
+      const opts=EXT_ENHANCEMENTS.map(enh=>{const sel=!!room.extSelections[enh.id];return `<div class="ext-option ${sel?'selected':''}" onclick="toggleExtSelection('${room.id}','${enh.id}')">
+        <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();toggleExtSelection('${room.id}','${enh.id}')" />
+        <div><div class="ext-option-label">${enh.icon} ${enh.label}</div><div class="ext-option-desc">${enh.desc}</div></div></div>`;}).join('');
+      const enhResults=EXT_ENHANCEMENTS.filter(enh=>room.extSelections[enh.id]).map(enh=>{
         const es=room.extSelections[enh.id];
-        if(es.status==='done'&&es.base64) return `
-          <div class="ext-enhancement-item">
-            <div class="ext-enhancement-header">
-              <span class="ext-enhancement-name">${enh.icon} ${enh.label}</span>
-              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-                <div class="draft-label">Draft (Low Quality)</div>
-                <button class="btn btn-outline btn-sm" onclick="downloadExtOriginal('${room.id}')">↓ Original</button>
-                <button class="btn btn-outline btn-sm" onclick="downloadExtEnhanced('${room.id}','${enh.id}','draft')">↓ Draft</button>
-                <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${room.id}','${enh.id}','draft')">↓ Side-by-Side</button>
-              </div>
-            </div>
-            <div class="result-viewer" style="padding:12px;">
-              <div class="result-pair">
-                <div class="result-img-wrap"><img src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" /><div class="result-img-badge">Original</div></div>
-                <div class="result-img-wrap"><img src="data:image/jpeg;base64,${es.base64}" /><div class="result-img-badge ext-enhanced">${enh.mlsTag}</div></div>
-              </div>
-            </div>
-            ${renderFinalPanel(room.id,enh.id)}
-          </div>`;
-        if(es.status==='processing')return `
-          <div class="ext-enhancement-item">
-            <div class="ext-enhancement-header">
-              <span class="ext-enhancement-name">${enh.icon} ${enh.label}</span>
-              <span style="font-size:0.75rem;color:var(--sky);display:flex;align-items:center;gap:6px;"><span class="spinner spinner-sky"></span> Generating draft...</span>
-            </div>
-          </div>`;
+        if(es.status==='done'&&es.base64)return `<div class="ext-enhancement-item">
+          <div class="ext-enhancement-header"><span class="ext-enhancement-name">${enh.icon} ${enh.label}</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span class="tier-label tier-draft">Draft</span>
+            <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadB64('data:image/jpeg;base64,'+getExtB64('${room.id}','${enh.id}','draft'),'EXT_${enh.id}_Draft_'+bName('${orig.name}')+'.jpg')">↓ Draft</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${room.id}','${enh.id}','draft')">↓ Side-by-Side</button>
+          </div></div>
+          <div class="result-viewer" style="padding:12px;"><div class="result-pair">
+            <div class="result-img-wrap"><img src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" /><div class="result-img-badge">Original</div></div>
+            <div class="result-img-wrap"><img src="data:image/jpeg;base64,${es.base64}" /><div class="result-img-badge ext-enhanced">${enh.mlsTag}</div></div>
+          </div></div>
+          ${renderFinalPanel(room.id,enh.id)}</div>`;
+        if(es.status==='processing')return `<div class="ext-enhancement-item"><div class="ext-enhancement-header"><span class="ext-enhancement-name">${enh.icon} ${enh.label}</span><span style="font-size:0.75rem;color:var(--sky);display:flex;align-items:center;gap:6px;"><span class="spinner spinner-sky"></span> Generating draft...</span></div></div>`;
         return '';
       }).join('');
       return `<div class="room-card is-exterior" id="card-${room.id}">
-        <div class="room-card-header">
-          <img class="room-card-thumb" src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to set Shot Focus" />
-          <div class="room-card-info">
-            <div class="room-card-name">${room.roomName} <span class="ext-badge">Exterior</span></div>
-            ${shotFocusBadge}
-            <div class="room-card-status" style="color:var(--sky);">Select enhancements below · Click photo to set Shot Focus</div>
-          </div>
-          <div class="room-card-actions">${runBtn}${modeToggle}</div>
-        </div>
-        <div class="ext-panel">
-          <div class="ext-panel-title">Choose Exterior Enhancements — Run Multiple on Same Photo</div>
-          <div class="ext-options">${extOptionsHtml}</div>
-          ${enhResultsHtml}
-        </div>
-      </div>`;
+        <div class="room-card-header"><img class="room-card-thumb" src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to set Shot Focus" />
+        <div class="room-card-info"><div class="room-card-name">${room.roomName} <span class="ext-badge">Exterior</span></div>${sfBadge}
+        <div class="room-card-status" style="color:var(--sky);">Select enhancements · Click photo to set Shot Focus</div></div>
+        <div class="room-card-actions">${runBtn}${modeToggle}</div></div>
+        <div class="ext-panel"><div class="ext-panel-title">Choose Exterior Enhancements — Multiple Allowed</div>
+        <div class="ext-options">${opts}</div>${enhResults}</div></div>`;
     }
 
-    // ── INTERIOR card ──
+    // ── INTERIOR ──
     const statusLabel={pending:'Ready to stage — click photo to set Shot Focus',processing:'Generating draft...',done:'✓ Draft complete',error:'⚠ Error — retry available'}[room.status];
-    const actionsHtml=(()=>{
-      if(room.status==='pending'||room.status==='error')
-        return `<button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>`;
-      if(room.status==='processing')
-        return `<button class="btn btn-outline btn-sm" disabled><span class="spinner"></span> Generating</button>`;
-      if(room.status==='done')
-        return `
-          <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
-          <button class="btn btn-outline btn-sm" onclick="downloadStaged('${room.id}','draft')">↓ Draft</button>
-          <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${room.id}',null,'draft')">↓ Side-by-Side</button>
-          ${!isAnchor?`<button class="btn btn-ghost btn-sm" onclick="resetRoom('${room.id}')">Re-Stage</button>`:''}`;
+    const actions=(()=>{
+      if(room.status==='pending'||room.status==='error')return `<button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>`;
+      if(room.status==='processing')return `<button class="btn btn-outline btn-sm" disabled><span class="spinner"></span> Generating</button>`;
+      if(room.status==='done')return `
+        <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadB64('data:image/jpeg;base64,'+getRoomB64('${room.id}','draft'),'DRAFT_'+bName(getOrigName('${room.id}'))+'.jpg')">↓ Draft</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${room.id}',null,'draft')">↓ Side-by-Side</button>
+        ${!isAnchor?`<button class="btn btn-ghost btn-sm" onclick="resetRoom('${room.id}')">Re-Stage</button>`:''}`;
       return '';
     })();
-    const resultHtml=room.status==='done'?`
-      <div class="result-viewer">
-        <div class="draft-label" style="padding:0 0 6px 0;">Draft (Low Quality — iterate freely)</div>
-        <div class="result-pair">
-          <div class="result-img-wrap"><img src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to update Shot Focus" /><div class="result-img-badge">Original</div></div>
-          <div class="result-img-wrap"><img src="data:image/jpeg;base64,${room.stagedBase64}" /><div class="result-img-badge staged">Virtually Staged · Draft</div></div>
-        </div>
-        <div class="mls-disclosure-note" style="font-size:0.73rem;">⚖️ <strong>MLS Upload Order: Original first → Staged second.</strong> Label "Virtually Staged" in Matrix.</div>
-      </div>`:'';
-    const iterHtml=room.status==='done'?`
-      <div class="iterate-panel">
-        <div style="flex:1;">
-          <textarea class="iterate-input" id="iter-${room.id}" placeholder='Revision instructions — e.g. "warmer lighting", "less furniture", "match the great room sofa"…' rows="2"></textarea>
-          <div class="iterate-hint">Drafts run at Low quality — fast and cheap. Use "Generate Final" below when ready for MLS.</div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="iterateRoom('${room.id}')">Re-Stage Draft</button>
-      </div>`:'';
-    const finalPanel=room.status==='done'?renderFinalPanel(room.id,null):'';
-    return `<div class="room-card ${isAnchor?'is-anchor':''}" id="card-${room.id}">
-      <div class="room-card-header">
-        <img class="room-card-thumb" src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to set Shot Focus" />
-        <div class="room-card-info">
-          <div class="room-card-name">${room.roomName} ${isAnchor?'<span class="anchor-badge">Design Anchor</span>':''}</div>
-          ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}
-          ${shotFocusBadge}
-          <div class="room-card-status ${room.status}">${statusLabel}</div>
-        </div>
-        <div class="room-card-actions">${actionsHtml}${modeToggle}</div>
+    const resultHtml=room.status==='done'?`<div class="result-viewer">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="tier-label tier-draft">Draft — Low Quality</span><span style="font-size:0.72rem;color:var(--muted);">Iterate freely. Generate Final when ready for MLS.</span></div>
+      <div class="result-pair">
+        <div class="result-img-wrap"><img src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to update Shot Focus" /><div class="result-img-badge">Original</div></div>
+        <div class="result-img-wrap"><img src="data:image/jpeg;base64,${room.stagedBase64}" /><div class="result-img-badge staged">Virtually Staged · Draft</div></div>
       </div>
-      ${resultHtml}${iterHtml}${finalPanel}
-    </div>`;
+      <div class="mls-disclosure-note" style="font-size:0.73rem;">⚖️ <strong>MLS Upload: Original first → Staged second.</strong> Label "Virtually Staged" in Matrix.</div>
+    </div>`:'';
+    const iterHtml=room.status==='done'?`<div class="iterate-panel">
+      <div style="flex:1;">
+        <textarea class="iterate-input" id="iter-${room.id}" placeholder='Revision — e.g. "warmer lighting, less furniture, match great room sofa"' rows="2"></textarea>
+        <div class="iterate-hint">Specify only what to change — everything else stays the same.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="iterateRoom('${room.id}')">Re-Stage Draft</button>
+    </div>`:'';
+    const finalHtml=room.status==='done'?renderFinalPanel(room.id,null):'';
+    return `<div class="room-card ${isAnchor?'is-anchor':''}" id="card-${room.id}">
+      <div class="room-card-header"><img class="room-card-thumb" src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to set Shot Focus" />
+      <div class="room-card-info"><div class="room-card-name">${room.roomName} ${isAnchor?'<span class="anchor-badge">Design Anchor</span>':''}</div>
+      ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}${sfBadge}
+      <div class="room-card-status ${room.status}">${statusLabel}</div></div>
+      <div class="room-card-actions">${actions}${modeToggle}</div></div>
+      ${resultHtml}${iterHtml}${finalHtml}</div>`;
   }).join('');
 }
 
-// ── Final quality panel ──────────────────
 function renderFinalPanel(roomId,enhId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   if(!room)return '';
+  const enh=enhId?EXT_ENHANCEMENTS.find(e=>e.id===enhId):null;
   const fs=enhId?room.extSelections[enhId]?.finalStatus:room.finalStatus;
   const fb64=enhId?room.extSelections[enhId]?.finalBase64:room.finalBase64;
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  const enh=enhId?EXT_ENHANCEMENTS.find(e=>e.id===enhId):null;
-
-  if(fs==='generating') return `
-    <div class="final-quality-panel">
-      <span class="final-quality-label">Generating Final...</span>
-      <span style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--success);"><span class="spinner spinner-green"></span> Processing at selected quality...</span>
-    </div>`;
-
-  if(fs==='done'&&fb64) return `
-    <div class="final-quality-panel">
-      <span class="final-quality-label">✓ Final Ready</span>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="btn btn-success btn-sm" onclick="downloadFinal('${roomId}','${enhId||''}')">↓ Download Final</button>
-        <button class="btn btn-outline btn-sm" onclick="downloadFinalSideBySide('${roomId}','${enhId||''}')">↓ Final Side-by-Side</button>
+  const draftReady=enhId?room.extSelections[enhId]?.base64:room.stagedBase64;
+  if(!draftReady)return '';
+  if(fs==='generating')return `<div class="final-panel"><span class="final-panel-label">Generating Final...</span><span class="final-progress"><span class="spinner spinner-green"></span> Processing at selected quality — this may take 30–60 seconds...</span></div>`;
+  if(fs==='done'&&fb64){
+    const tag=enh?enh.label.replace(/\s+/g,''):'VirtuallyStaged';
+    const orig=SESSION.originals.find(o=>o.id===room.originalId);
+    return `<div class="result-viewer" style="padding:12px 16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="tier-label tier-final">Final — MLS Quality</span></div>
+      <div class="result-pair">
+        <div class="result-img-wrap"><img src="${orig.dataUrl}" /><div class="result-img-badge">Original</div></div>
+        <div class="result-img-wrap"><img src="data:image/jpeg;base64,${fb64}" /><div class="result-img-badge final-badge">Final · ${enh?enh.mlsTag:'Virtually Staged'}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn btn-success btn-sm" onclick="downloadB64('data:image/jpeg;base64,'+getFinalB64('${roomId}','${enhId||''}'),'FINAL_${tag}_'+bName(getOrigName('${roomId}'))+'.jpg')">↓ Final</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${roomId}','${enhId||null}','final')">↓ Final Side-by-Side</button>
         <button class="btn btn-ghost btn-sm" onclick="resetFinal('${roomId}','${enhId||''}')">Re-Generate</button>
       </div>
     </div>`;
-
-  // Default — show Generate Final button
-  const draftReady=enhId?(room.extSelections[enhId]?.base64):(room.stagedBase64);
-  if(!draftReady)return '';
-  return `
-    <div class="final-quality-panel">
-      <span class="final-quality-label">Generate Final</span>
-      <select class="quality-select" id="qsel-${roomId}-${enhId||'int'}">
-        <option value="medium">Medium Quality (~$0.04)</option>
-        <option value="high">High Quality (~$0.17)</option>
-      </select>
-      <button class="btn btn-success btn-sm" onclick="generateFinal('${roomId}','${enhId||''}')">Generate Final →</button>
-    </div>`;
+  }
+  const selId=`qsel-${roomId}-${enhId||'int'}`;
+  return `<div class="final-panel">
+    <span class="final-panel-label">Generate Final</span>
+    <select class="quality-select" id="${selId}">
+      <option value="medium">Medium Quality (~$0.04)</option>
+      <option value="high">High Quality (~$0.17)</option>
+    </select>
+    <button class="btn btn-success btn-sm" onclick="generateFinal('${roomId}','${enhId||''}')">Generate Final →</button>
+  </div>`;
 }
 
 // ══════════════════════════════════════════
 // PROMPT BUILDERS
 // ══════════════════════════════════════════
+function getRoomTypeRules(roomName){
+  return ROOM_STAGING_RULES[roomName]||'';
+}
+
+// FIX #3: Reflection rule injected into every prompt
+const REFLECTION_RULE = `REFLECTION & LIGHTING ACCURACY — STRICTLY ENFORCE:
+- All mirrors, glass, windows, appliances, and polished surfaces must show ONLY what is physically visible from the camera angle in this exact photo
+- Do NOT invent reflections of objects, furniture, or spaces not present in this scene
+- Do NOT show reflections of rooms or angles that cannot be seen from this camera position
+- Window glass must show what is actually outside or simply appear as bright natural light — no invented exterior views
+- Mirrors must reflect only what would genuinely be visible to the camera — if uncertain, keep mirrors minimal or show soft light reflection only`;
+
+// FIX #2: Preservation block for iterations
+function buildPreservationBlock(room,iterNote){
+  if(!iterNote?.trim())return '';
+  return `PRESERVE FROM PREVIOUS STAGING — CHANGE ONLY WHAT IS LISTED BELOW:
+Keep identical: all furniture pieces not mentioned, all colors and materials not mentioned, all décor not mentioned, all lighting setup, all spatial relationships.
+CHANGE ONLY: ${iterNote.trim()}
+Do not add, remove, or modify anything else. This is a targeted revision, not a complete re-stage.`;
+}
+
 function buildInteriorPrompt(room,iterNote,quality){
   const i=SESSION.intake;
   let continuity='';
@@ -850,64 +767,81 @@ function buildInteriorPrompt(room,iterNote,quality){
     const anchor=SESSION.rooms.find(r=>r.id===SESSION.anchorRoomId);
     if(anchor?.approvedDNA){
       const isAdj=room.adjacentRooms.includes(anchor.roomName);
-      continuity=`\nDESIGN CONTINUITY:\nThis room belongs to the same home as the already-staged ${anchor.roomName}. ${anchor.roomName} was staged with: ${anchor.approvedDNA}\n${isAdj?`DIRECTLY ADJACENT — matching furniture language, palette, and materials must be visible in any shared sightlines.`:'Maintain consistent design language throughout.'}\nDo NOT introduce conflicting styles, woods, metals, or color palettes.`;
+      continuity=`\nDESIGN CONTINUITY: This room is in the same home as the staged ${anchor.roomName}. Match: ${anchor.approvedDNA}\n${isAdj?'DIRECTLY ADJACENT — visible sightlines must show matching furniture language and palette.':'Maintain consistent style, woods, metals, textiles throughout.'}`;
     }
   }
-  const shotFocusBlock=room.shotFocus?`\nSHOT FOCUS — CRITICAL:\n${room.shotFocus}\nThis instruction overrides default room-filling behavior. Stage ONLY the spaces and zones described above.`:'';
-  const mlsRule=i.mls==='A'?'MLS SAFE MODE: Preserve all architectural elements exactly as photographed.':'Maintain photorealistic staging quality.';
-  const qualNote=quality==='low'?'Draft quality — focus on correct furniture placement and style direction.':quality==='high'?'Maximum photorealistic quality — MLS-grade output, luxury editorial standard.':'High quality photorealistic output suitable for MLS marketing.';
-  const iterBlock=iterNote?.trim()?`\nREVISION: ${iterNote.trim()}`:'';
+  const shotFocus=room.shotFocus?`\nSHOT FOCUS — CRITICAL: ${room.shotFocus}\nStage ONLY the primary space described. Do not over-furnish background or adjacent visible spaces.`:'';
+  const roomRules=getRoomTypeRules(room.roomName);
+  const preserveBlock=buildPreservationBlock(room,iterNote);
+  const mlsRule=i.mls==='A'?'MLS SAFE MODE: Preserve all architectural elements exactly as photographed. No structural alterations.':'Maintain photorealistic staging quality.';
+  const qualNote=quality==='high'?'Maximum photorealistic quality — luxury editorial, MLS-grade.':quality==='medium'?'High quality photorealistic MLS output.':'Draft quality — focus on correct placement and style direction.';
   return `Professional real estate virtual interior staging.
 ROOM: ${room.roomName}${room.adjacentRooms.length?`\nCONNECTS TO: ${room.adjacentRooms.join(', ')}`:''}
-PRESERVE EXACTLY: room dimensions, ceiling height, windows, doors, flooring, cabinetry, countertops, appliances, permanent fixtures, camera perspective. Do not alter architecture.
+PRESERVE EXACTLY: room dimensions, ceiling height, windows, doors, flooring direction, cabinetry, countertops, appliances, permanent fixtures, architectural details, camera perspective. Do not alter any of these.
 STAGING: Buyer: ${i.buyer_label} · Feeling: ${i.feeling_label} · Style: ${i.style_label} · Intensity: ${i.intensity_label} · Color: ${i.palette_label}
-Add furniture, rugs, art, plants, décor appropriate to room. Realistic scale. Restrained upscale realism. Accurate reflections on all surfaces.
-${shotFocusBlock}${continuity}
-${mlsRule} ${qualNote}${iterBlock}
+Add furniture, rugs, art, plants, décor appropriate to this specific room type only. Realistic furniture scale. Restrained upscale realism — avoid overcrowding.
+${REFLECTION_RULE}
+${roomRules?roomRules+'\n':''}${shotFocus}${continuity}
+${preserveBlock?preserveBlock+'\n':''}${mlsRule} ${qualNote}
 Embed "VIRTUALLY STAGED" text in lower portion.`.trim();
 }
 
 function buildExteriorPrompt(room,enh,quality){
   const i=SESSION.intake;
-  const mlsRule=i.mls==='A'?'MLS SAFE MODE: Preserve ALL architectural elements exactly — roofline, structure, driveway, windows, hardscape. Do not fabricate or alter permanent features.':'Maintain photorealistic quality.';
-  const shotFocusBlock=room.shotFocus?`\nSHOT FOCUS: ${room.shotFocus}`:'';
-  const qualNote=quality==='high'?'Maximum photorealistic quality — luxury editorial standard.':quality==='medium'?'High quality photorealistic MLS output.':'Draft quality.';
+  const mlsRule=i.mls==='A'?'MLS SAFE MODE: Preserve ALL architectural elements exactly — roofline, structure, driveway, windows, hardscape. No fabrication.':'Maintain photorealistic quality.';
+  const shotFocus=room.shotFocus?`\nSHOT FOCUS: ${room.shotFocus}`:'';
+  const qualNote=quality==='high'?'Maximum photorealistic quality.':quality==='medium'?'High quality MLS output.':'Draft quality.';
+  const base=`${shotFocus}\n${REFLECTION_RULE}\n${mlsRule} ${qualNote}\nEmbed "${enh.mlsTag}" text in lower portion.`;
   const prompts={
     'outdoor-living':`Professional real estate virtual exterior staging. Add outdoor living furniture to this exterior photo.
 PRESERVE EXACTLY: all architecture, structure, hardscape, fencing, existing landscaping, roofline, camera perspective.
-ADD: outdoor furniture for ${i.buyer_label} buyer — patio dining set, lounge seating, side tables, planters, fire feature if appropriate. Style: ${i.style_label}. Color: ${i.palette_label}. Realistic scale on existing hardscape only.
-${shotFocusBlock}${mlsRule} ${qualNote}
-Embed "${enh.mlsTag}" text in lower portion.`,
+ADD: outdoor furniture for ${i.buyer_label} buyer — patio dining set, lounge seating, side tables, planters. Style: ${i.style_label}. Color: ${i.palette_label}. Realistic scale on existing hardscape only — do not float furniture.${base}`,
     'landscape':`Professional real estate exterior landscape enhancement.
 PRESERVE EXACTLY: all architecture, structure, hardscape, fencing, driveway, roofline, camera perspective.
-ENHANCE: lawn to lush green, trim hedges, add seasonal flowers, fresh mulch, clean walkways. Realistic — no fantasy landscaping.
-${shotFocusBlock}${mlsRule} ${qualNote}
-Embed "${enh.mlsTag}" text in lower portion.`,
+ENHANCE: lawn to lush green, trim hedges, seasonal flowers, fresh mulch, clean walkways. Realistic only — no fantasy landscaping.${base}`,
     'golden-hour':`Professional real estate Golden Hour lighting conversion.
-PRESERVE EXACTLY: all architecture, roofline, structure, driveway, windows, landscaping, camera perspective.
-LIGHTING: Warm golden hour sunset — low-angle amber sunlight, long soft shadows, subtle warm facade glow, cinematic sky. Interior windows may show subtle warm light. Avoid oversaturated orange, fake HDR.
-${shotFocusBlock}${mlsRule} ${qualNote}
-Embed "${enh.mlsTag}" text in lower portion.`,
+PRESERVE EXACTLY: all architecture, roofline, structure, driveway, windows, landscaping layout, camera perspective. Do NOT add or remove any element.
+LIGHTING ONLY: Warm golden hour sunset — low-angle amber light, long soft shadows, subtle warm facade glow, cinematic sky. Avoid oversaturated orange or fake HDR.${base}`,
     'twilight':`Professional real estate Twilight conversion.
-PRESERVE EXACTLY: all architecture, roofline, structure, driveway, windows, landscaping, camera perspective.
-CONVERT: Blue-hour sky, warm interior window glow, subtle exterior path lighting, luxury curb appeal. Realistic exposure balance. No neon, no fantasy colors.
-${shotFocusBlock}${mlsRule} ${qualNote}
-Embed "${enh.mlsTag}" text in lower portion.`,
+PRESERVE EXACTLY: all architecture, roofline, structure, driveway, windows, landscaping, camera perspective. Do NOT add or remove any element.
+LIGHTING ONLY: Blue-hour sky, warm interior window glow, subtle path lighting, luxury curb appeal. Realistic exposure — no neon, no fantasy colors.${base}`,
   };
   return prompts[enh.id]||'Professional real estate exterior photo enhancement.';
 }
 
 // ══════════════════════════════════════════
-// STAGE ROOM (always draft = low quality)
+// API CALL — with retry on timeout
 // ══════════════════════════════════════════
 async function callStageAPI(imageBase64,mimeType,prompt,quality){
-  const res=await fetch('/.netlify/functions/stage-image',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({imageBase64,mimeType,stagingPrompt:prompt,quality:quality||'low'})});
-  const data=await res.json();
-  if(!res.ok||data.error)throw new Error(data.error||'API error');
-  return data.stagedBase64;
+  const controller=new AbortController();
+  // 55-second client timeout — longer than Netlify limit so we get the actual error
+  const timer=setTimeout(()=>controller.abort(),55000);
+  try{
+    const res=await fetch('/.netlify/functions/stage-image-start',{
+      method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
+      body:JSON.stringify({imageBase64,mimeType,stagingPrompt:prompt,quality:quality||'low'})
+    });
+    clearTimeout(timer);
+    if(!res.ok){
+      const txt=await res.text();
+      // Check if it's an HTML error page (timeout)
+      if(txt.trim().startsWith('<')){throw new Error('Request timed out — please try again. High quality images take longer to generate.');}
+      const data=JSON.parse(txt);
+      throw new Error(data.error||'API error');
+    }
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    return data.stagedBase64;
+  }catch(err){
+    clearTimeout(timer);
+    if(err.name==='AbortError')throw new Error('Request timed out — please try again.');
+    throw err;
+  }
 }
 
+// ══════════════════════════════════════════
+// STAGE ROOM
+// ══════════════════════════════════════════
 async function stageRoom(roomId,iterNote){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   const orig=SESSION.originals.find(o=>o.id===room.originalId);
@@ -919,50 +853,44 @@ async function stageRoom(roomId,iterNote){
     room.approvedDNA=`${SESSION.intake.style_label} style, ${SESSION.intake.palette_label} palette, ${SESSION.intake.intensity_label} intensity, ${SESSION.intake.buyer_label} buyer, ${SESSION.intake.feeling_label} mood.`;
     if(!SESSION.anchorRoomId){SESSION.anchorRoomId=room.id;showToast(`✓ ${room.roomName} set as Design Anchor.`,'success');}
     else showToast(`✓ ${room.roomName} draft complete.`,'success');
-    await resizeStagedToMatch(room,orig,null,null,'stagedBase64');
+    await resizeToMatch(room,orig,null,'stagedBase64',b64);
     renderRoomQueue();
   }catch(err){room.status='error';renderRoomQueue();showToast('Error: '+err.message,'error');}
 }
-
 function iterateRoom(roomId){
   const note=document.getElementById('iter-'+roomId)?.value?.trim()||'';
+  if(!note){showToast('Enter revision instructions first.','error');return;}
   const room=SESSION.rooms.find(r=>r.id===roomId);
   if(room){room.status='pending';room.stagedBase64=null;room.finalBase64=null;room.finalStatus=null;stageRoom(roomId,note);}
 }
-
 function resetRoom(roomId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
-  if(room){room.status='pending';room.stagedBase64=null;room.finalBase64=null;room.finalStatus=null;room.approvedDNA=null;
-    if(SESSION.anchorRoomId===roomId)SESSION.anchorRoomId=null;renderRoomQueue();}
+  if(room){room.status='pending';room.stagedBase64=null;room.finalBase64=null;room.finalStatus=null;room.approvedDNA=null;if(SESSION.anchorRoomId===roomId)SESSION.anchorRoomId=null;renderRoomQueue();}
 }
 
 // ══════════════════════════════════════════
-// GENERATE FINAL (medium or high quality)
+// GENERATE FINAL
 // ══════════════════════════════════════════
 async function generateFinal(roomId,enhId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   const orig=SESSION.originals.find(o=>o.id===room.originalId);
   if(!room||!orig)return;
+  const enh=enhId?EXT_ENHANCEMENTS.find(e=>e.id===enhId):null;
   const selId='qsel-'+roomId+'-'+(enhId||'int');
   const quality=document.getElementById(selId)?.value||'medium';
-  const enh=enhId?EXT_ENHANCEMENTS.find(e=>e.id===enhId):null;
   const prompt=enh?buildExteriorPrompt(room,enh,quality):buildInteriorPrompt(room,'',quality);
-
-  if(enhId){room.extSelections[enhId].finalStatus='generating';}
-  else{room.finalStatus='generating';}
+  if(enhId){room.extSelections[enhId].finalStatus='generating';}else{room.finalStatus='generating';}
   renderRoomQueue();
-
   try{
     const b64=await callStageAPI(orig.base64,orig.mimeType,prompt,quality);
-    await resizeStagedToMatch(room,orig,enhId,null,'__final__',b64);
+    await resizeToMatch(room,orig,enhId,'__final__',b64);
     showToast(`✓ Final generated at ${quality} quality.`,'success');
+    renderRoomQueue();
   }catch(err){
-    if(enhId)room.extSelections[enhId].finalStatus=null;
-    else room.finalStatus=null;
-    renderRoomQueue();showToast('Final generation error: '+err.message,'error');
+    if(enhId)room.extSelections[enhId].finalStatus=null;else room.finalStatus=null;
+    renderRoomQueue();showToast('Final error: '+err.message,'error');
   }
 }
-
 function resetFinal(roomId,enhId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   if(!room)return;
@@ -972,7 +900,7 @@ function resetFinal(roomId,enhId){
 }
 
 // ══════════════════════════════════════════
-// EXTERIOR ENHANCEMENTS (draft)
+// EXTERIOR ENHANCEMENTS
 // ══════════════════════════════════════════
 async function runExtEnhancements(roomId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
@@ -985,21 +913,20 @@ async function runExtEnhancements(roomId){
   for(const enh of toRun){
     try{
       const b64=await callStageAPI(orig.base64,orig.mimeType,buildExteriorPrompt(room,enh,'low'),'low');
-      room.extSelections[enh.id].base64=b64;
-      room.extSelections[enh.id].status='done';
-      await resizeStagedToMatch(room,orig,enh.id,null,'__extdraft__',b64);
+      room.extSelections[enh.id].base64=b64;room.extSelections[enh.id].status='done';
+      await resizeToMatch(room,orig,enh.id,'__extdraft__',b64);
       showToast(`✓ ${enh.label} draft complete.`,'success');
-    }catch(err){room.extSelections[enh.id].status='pending';showToast(`${enh.label} error: ${err.message}`,'error');}
+    }catch(err){room.extSelections[enh.id].status='pending';showToast(`${enh.label}: ${err.message}`,'error');}
     renderRoomQueue();
   }
 }
 
 // ══════════════════════════════════════════
-// RESIZE — match staged dims to original
+// RESIZE
 // ══════════════════════════════════════════
-function resizeStagedToMatch(room,orig,enhId,_unused,storeKey,incomingB64){
+function resizeToMatch(room,orig,enhId,storeKey,incomingB64){
   return new Promise(resolve=>{
-    const b64=incomingB64||(enhId?room.extSelections[enhId]?.base64:room.stagedBase64);
+    const b64=incomingB64;
     if(!b64){resolve();return;}
     const oI=new Image(),sI=new Image();let loaded=0;
     const onLoad=()=>{
@@ -1013,14 +940,9 @@ function resizeStagedToMatch(room,orig,enhId,_unused,storeKey,incomingB64){
       else{sh=s;sw=Math.min(s,Math.round(s*ratio));sx=Math.round((s-sw)/2);sy=0;}
       ctx.drawImage(sI,sx,sy,sw,sh,0,0,oW,oH);
       const newB64=canvas.toDataURL('image/jpeg',0.93).split(',')[1];
-      if(storeKey==='__final__'){
-        if(enhId){room.extSelections[enhId].finalBase64=newB64;room.extSelections[enhId].finalStatus='done';}
-        else{room.finalBase64=newB64;room.finalStatus='done';}
-      } else if(storeKey==='__extdraft__'){
-        if(enhId)room.extSelections[enhId].base64=newB64;
-      } else {
-        room[storeKey]=newB64;
-      }
+      if(storeKey==='__final__'){if(enhId){room.extSelections[enhId].finalBase64=newB64;room.extSelections[enhId].finalStatus='done';}else{room.finalBase64=newB64;room.finalStatus='done';}}
+      else if(storeKey==='__extdraft__'){if(enhId)room.extSelections[enhId].base64=newB64;}
+      else{room[storeKey]=newB64;}
       resolve();
     };
     oI.onload=sI.onload=onLoad;
@@ -1031,89 +953,48 @@ function resizeStagedToMatch(room,orig,enhId,_unused,storeKey,incomingB64){
 // ══════════════════════════════════════════
 // DOWNLOADS
 // ══════════════════════════════════════════
-function downloadOriginal(roomId){
-  const room=SESSION.rooms.find(r=>r.id===roomId);
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  triggerDownload(orig.dataUrl,'ORIGINAL_'+baseName(orig.name)+'.jpg');
-}
-function downloadStaged(roomId,tier){
-  const room=SESSION.rooms.find(r=>r.id===roomId);
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  const b64=tier==='final'?room.finalBase64:room.stagedBase64;
-  if(!b64)return;
-  triggerDownload('data:image/jpeg;base64,'+b64,'STAGED_VirtuallyStaged'+(tier==='final'?'_FINAL':'_Draft')+'_'+baseName(orig.name)+'.jpg');
-}
-function downloadFinal(roomId,enhId){
-  const room=SESSION.rooms.find(r=>r.id===roomId);
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  const b64=enhId?room.extSelections[enhId]?.finalBase64:room.finalBase64;
-  const enh=enhId?EXT_ENHANCEMENTS.find(e=>e.id===enhId):null;
-  if(!b64)return;
-  const tag=enh?enh.label.replace(/\s+/g,''):'VirtuallyStaged';
-  triggerDownload('data:image/jpeg;base64,'+b64,'FINAL_'+tag+'_'+baseName(orig.name)+'.jpg');
-}
-function downloadExtOriginal(roomId){downloadOriginal(roomId);}
-function downloadExtEnhanced(roomId,enhId,tier){
-  const room=SESSION.rooms.find(r=>r.id===roomId);
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  const enh=EXT_ENHANCEMENTS.find(e=>e.id===enhId);
-  const b64=tier==='final'?room.extSelections[enhId]?.finalBase64:room.extSelections[enhId]?.base64;
-  if(!b64)return;
-  triggerDownload('data:image/jpeg;base64,'+b64,'EXT_'+enh.label.replace(/\s+/g,'')+(tier==='final'?'_FINAL':'_Draft')+'_'+baseName(orig.name)+'.jpg');
-}
+function getOrigName(roomId){const room=SESSION.rooms.find(r=>r.id===roomId);const orig=SESSION.originals.find(o=>o.id===room?.originalId);return orig?.name||'photo';}
+function getRoomB64(roomId,tier){const room=SESSION.rooms.find(r=>r.id===roomId);return tier==='final'?room?.finalBase64:room?.stagedBase64;}
+function getExtB64(roomId,enhId,tier){const room=SESSION.rooms.find(r=>r.id===roomId);return tier==='final'?room?.extSelections[enhId]?.finalBase64:room?.extSelections[enhId]?.base64;}
+function getFinalB64(roomId,enhId){return enhId?getExtB64(roomId,enhId,'final'):getRoomB64(roomId,'final');}
+function bName(n){return(n||'photo').replace(/\.[^.]+$/,'');}
+function downloadOriginal(roomId){const room=SESSION.rooms.find(r=>r.id===roomId);const orig=SESSION.originals.find(o=>o.id===room?.originalId);if(orig)triggerDownload(orig.dataUrl,'ORIGINAL_'+bName(orig.name)+'.jpg');}
+function downloadB64(dataUrl,filename){if(dataUrl&&!dataUrl.endsWith('undefined')&&!dataUrl.endsWith('null'))triggerDownload(dataUrl,filename);}
 function downloadSideBySide(roomId,enhId,tier){
   const room=SESSION.rooms.find(r=>r.id===roomId);
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  const b64=enhId?(tier==='final'?room.extSelections[enhId]?.finalBase64:room.extSelections[enhId]?.base64):(tier==='final'?room.finalBase64:room.stagedBase64);
+  const orig=SESSION.originals.find(o=>o.id===room?.originalId);
+  const b64=enhId?getExtB64(roomId,enhId,tier):getRoomB64(roomId,tier);
   const enh=enhId?EXT_ENHANCEMENTS.find(e=>e.id===enhId):null;
-  const stagedLabel=enh?enh.mlsTag:'VIRTUALLY STAGED';
-  if(!b64)return;
+  const label=enh?enh.mlsTag:tier==='final'?'VIRTUALLY STAGED — FINAL':'VIRTUALLY STAGED · DRAFT';
+  if(!b64||!orig)return;
   const canvas=document.getElementById('sbs-canvas'),ctx=canvas.getContext('2d');
   const oI=new Image(),sI=new Image();let loaded=0;
-  const onLoad=()=>{
+  const go=()=>{
     loaded++;if(loaded<2)return;
-    const iW=oI.naturalWidth,iH=oI.naturalHeight;
-    const scale=900/iH,sW=Math.round(iW*scale),pad=14,ftH=62;
+    const iW=oI.naturalWidth,iH=oI.naturalHeight,scale=900/iH,sW=Math.round(iW*scale),pad=14,ftH=62;
     canvas.width=sW*2+pad*3;canvas.height=900+ftH+pad;
     ctx.fillStyle='#1a1714';ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.drawImage(oI,pad,pad,sW,900);ctx.drawImage(sI,sW+pad*2,pad,sW,900);
     ctx.fillStyle='rgba(26,23,20,0.82)';ctx.fillRect(pad,pad,130,26);
     ctx.fillStyle='#fff';ctx.font='500 12px sans-serif';ctx.fillText('ORIGINAL',pad+10,pad+18);
-    ctx.fillStyle=enh?'rgba(58,124,165,0.92)':tier==='final'?'rgba(45,106,79,0.92)':'rgba(184,151,90,0.92)';
-    ctx.fillRect(sW+pad*2,pad,Math.min(stagedLabel.length*7+20,sW-10),26);
-    ctx.fillStyle=enh?'#fff':tier==='final'?'#fff':'#1a1714';
-    ctx.font='500 11px sans-serif';ctx.fillText(stagedLabel+(tier==='final'?' — FINAL':''),sW+pad*2+10,pad+18);
-    ctx.fillStyle='#b8975a';ctx.font='400 11px sans-serif';
-    ctx.fillText('Smart Stage AI™  |  SZREG  |  '+room.roomName+'  |  '+orig.name,pad,900+pad+18);
-    ctx.fillStyle='#7a6f63';ctx.font='400 10px sans-serif';
-    ctx.fillText('Virtually staged/digitally enhanced for illustrative purposes. Original available upon request. MetroList Rule 11.6.1 compliant.',pad,900+pad+36);
-    const suffix=(enh?enh.label.replace(/\s+/g,''):'VirtuallyStaged')+(tier==='final'?'_FINAL':'_Draft');
-    triggerDownload(canvas.toDataURL('image/jpeg',0.93),'SBS_'+suffix+'_'+baseName(orig.name)+'.jpg');
+    const badgeBg=enh?'rgba(58,124,165,0.92)':tier==='final'?'rgba(45,106,79,0.92)':'rgba(184,151,90,0.92)';
+    ctx.fillStyle=badgeBg;ctx.fillRect(sW+pad*2,pad,Math.min(label.length*7+20,sW-10),26);
+    ctx.fillStyle=enh||tier==='final'?'#fff':'#1a1714';ctx.font='500 11px sans-serif';ctx.fillText(label,sW+pad*2+10,pad+18);
+    ctx.fillStyle='#b8975a';ctx.font='400 11px sans-serif';ctx.fillText('Smart Stage AI™  |  SZREG  |  '+room.roomName+'  |  '+orig.name,pad,900+pad+18);
+    ctx.fillStyle='#7a6f63';ctx.font='400 10px sans-serif';ctx.fillText('Virtually staged/digitally enhanced for illustrative purposes. Original available upon request. MetroList Rule 11.6.1 compliant.',pad,900+pad+36);
+    const sfx=(enh?enh.label.replace(/\s+/g,''):'VirtuallyStaged')+'_'+(tier==='final'?'FINAL':'Draft');
+    triggerDownload(canvas.toDataURL('image/jpeg',0.93),'SBS_'+sfx+'_'+bName(orig.name)+'.jpg');
   };
-  oI.onload=sI.onload=onLoad;oI.src=orig.dataUrl;sI.src='data:image/jpeg;base64,'+b64;
+  oI.onload=sI.onload=go;oI.src=orig.dataUrl;sI.src='data:image/jpeg;base64,'+b64;
 }
-function downloadFinalSideBySide(roomId,enhId){downloadSideBySide(roomId,enhId||null,'final');}
 function triggerDownload(dataUrl,filename){const a=document.createElement('a');a.href=dataUrl;a.download=filename;a.click();}
-function baseName(n){return n.replace(/\.[^.]+$/,'');}
 
 // ══════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════
-function showStep(id){
-  ['step-upload','step-intake','step-mapping','step-staging'].forEach(s=>document.getElementById(s)?.classList.add('hidden'));
-  document.getElementById(id)?.classList.remove('hidden');
-}
-function resetSession(){
-  SESSION.originals=[];SESSION.intake={};SESSION.rooms=[];
-  SESSION.floorplanRoomMap=null;SESSION.photoRoomMap={};SESSION.anchorRoomId=null;
-  document.getElementById('thumb-grid').innerHTML='';
-  document.getElementById('upload-actions').classList.add('hidden');
-  fileInput.value='';
-}
-function showToast(msg,type=''){
-  const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');
-  setTimeout(()=>{t.className='';},3800);
-}
+function showStep(id){['step-upload','step-intake','step-mapping','step-staging'].forEach(s=>document.getElementById(s)?.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden');}
+function resetSession(){SESSION.originals=[];SESSION.intake={};SESSION.rooms=[];SESSION.floorplanRoomMap=null;SESSION.photoRoomMap={};SESSION.anchorRoomId=null;document.getElementById('thumb-grid').innerHTML='';document.getElementById('upload-actions').classList.add('hidden');fileInput.value='';}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');setTimeout(()=>{t.className='';},4000);}
 function esc(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");}
 showStep('step-upload');
 </script>

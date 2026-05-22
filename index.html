@@ -591,7 +591,7 @@ function buildRoomQueue(){
   const photos=SESSION.originals.filter(o=>!o.isFloorplan);
   SESSION.rooms=photos.map(orig=>{
     const m=SESSION.photoRoomMap[orig.id];
-    return {id:'room_'+orig.id,originalId:orig.id,roomName:m?.roomName||orig.name,adjacentRooms:m?.adjacentNames||[],isExterior:m?.isExterior||false,isReference:m?.isReference||false,shotFocus:m?.shotFocus||'',status:'pending',stagedBase64:null,finalBase64:null,finalStatus:null,iterationNote:'',approvedDNA:null,extSelections:{}};
+    return {id:'room_'+orig.id,originalId:orig.id,roomName:m?.roomName||orig.name,adjacentRooms:m?.adjacentNames||[],isExterior:m?.isExterior||false,isReference:m?.isReference||false,shotFocus:m?.shotFocus||'',status:'pending',stagedBase64:null,finalBase64:null,finalStatus:null,iterationNote:'',approvedDNA:null,extSelections:{},spatialAnalysis:null,spatialStatus:null};
   });
   renderRoomQueue();
 }
@@ -624,7 +624,12 @@ function renderRoomQueue(){
       <button class="mode-toggle-btn ${!room.isExterior?'active-int':''}" onclick="toggleRoomMode('${room.id}',false)">Interior</button>
       <button class="mode-toggle-btn ${room.isExterior?'active-ext':''}" onclick="toggleRoomMode('${room.id}',true)">Exterior</button>
     </div>`;
-    const sfBadge=room.shotFocus?`<div class="shot-focus-badge">🎯 ${room.shotFocus.slice(0,80)}${room.shotFocus.length>80?'…':''}</div>`:'';
+    const sfBadge=room.shotFocus?`<div class="shot-focus-badge">🎯 ${room.shotFocus.slice(0,80)}${room.shotFocus.length>80?'…':''}</div>`:''
+    const spatialBadge=(()=>{
+      if(room.spatialStatus==='analyzing')return `<div style="font-size:0.68rem;color:#888;margin-top:2px;display:flex;align-items:center;gap:4px;"><span class="spinner" style="width:10px;height:10px;border-width:1.5px;"></span> Analyzing room geometry...</div>`;
+      if(room.spatialAnalysis?.focalPoint)return `<div style="font-size:0.68rem;color:#2d6a4f;margin-top:2px;">🏠 Spatial: ${room.spatialAnalysis.focalPoint}${room.spatialAnalysis.islandSides&&room.spatialAnalysis.islandSides!=='N/A'?' · '+room.spatialAnalysis.islandSides:''}</div>`;
+      return '';
+    })();
 
     // ── EXTERIOR ──
     if(room.isExterior){
@@ -724,7 +729,7 @@ function renderRoomQueue(){
     return `<div class="room-card ${isAnchor?'is-anchor':''}" id="card-${room.id}">
       <div class="room-card-header"><img class="room-card-thumb" src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to set Shot Focus" />
       <div class="room-card-info"><div class="room-card-name">${room.roomName} ${isAnchor?'<span class="anchor-badge">Design Anchor</span>':''}</div>
-      ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}${sfBadge}
+      ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}${sfBadge}${spatialBadge}
       <div class="room-card-status ${room.status}">${statusLabel}</div></div>
       <div class="room-card-actions">${actions}${modeToggle}</div></div>
       ${resultHtml}${iterHtml}${finalHtml}${repBtn}</div>`;
@@ -802,6 +807,21 @@ function buildInteriorPrompt(room,iterNote,quality){
     }
   }
   const shotFocus=room.shotFocus?`\nSHOT FOCUS — CRITICAL: ${room.shotFocus}\nStage ONLY the primary space described. Do not over-furnish background or adjacent visible spaces.`:'';
+  // Spatial analysis block — precise placement from Claude Vision
+  const spatialBlock=(()=>{
+    const s=room.spatialAnalysis;
+    if(!s)return '';
+    const lines=[];
+    if(s.cameraFacing)lines.push('Camera position: '+s.cameraFacing);
+    if(s.focalPoint)lines.push('Room focal point: '+s.focalPoint);
+    if(s.islandSides&&s.islandSides!=='N/A'&&s.islandSides!=='n/a')lines.push('Island orientation: '+s.islandSides);
+    if(s.openFloorAreas)lines.push('Empty floor areas: '+s.openFloorAreas);
+    if(s.furniturePlacement?.length)lines.push('PRECISE PLACEMENT REQUIRED:\n'+s.furniturePlacement.map(p=>'  - '+p).join('\n'));
+    if(s.avoidAreas?.length)lines.push('DO NOT PLACE FURNITURE: '+s.avoidAreas.join(', '));
+    if(s.lightDirection)lines.push('Light source: '+s.lightDirection);
+    if(s.spatialNotes)lines.push('Spatial context: '+s.spatialNotes);
+    return lines.length?'\nSPATIAL ANALYSIS — FOLLOW EXACTLY:\n'+lines.join('\n'):'';
+  })();
   const roomRules=getRoomTypeRules(room.roomName);
   const preserveBlock=buildPreservationBlock(room,iterNote);
   const mlsRule=i.mls==='A'?'MLS SAFE MODE: Preserve all architectural elements exactly as photographed. No structural alterations.':'Maintain photorealistic staging quality.';
@@ -812,7 +832,7 @@ PRESERVE EXACTLY: room dimensions, ceiling height, windows, doors, flooring dire
 STAGING: Buyer: ${i.buyer_label} · Feeling: ${i.feeling_label} · Style: ${i.style_label} · Intensity: ${i.intensity_label} · Color: ${i.palette_label}
 Add furniture, rugs, art, plants, décor appropriate to this specific room type only. Realistic furniture scale. Restrained upscale realism — avoid overcrowding.
 ${REFLECTION_RULE}
-${roomRules?roomRules+'\n':''}${shotFocus}${continuity}
+${roomRules?roomRules+'\n':''}${spatialBlock}${shotFocus}${continuity}
 ${preserveBlock?preserveBlock+'\n':''}${mlsRule} ${qualNote}
 Embed "VIRTUALLY STAGED" text in lower portion.`.trim();
 }
@@ -930,10 +950,31 @@ async function stageRoomReplicate(roomId){
 // ══════════════════════════════════════════
 // STAGE ROOM
 // ══════════════════════════════════════════
+async function analyzeRoomSpatial(room, orig) {
+  if(room.spatialAnalysis) return; // already analyzed
+  room.spatialStatus='analyzing';
+  renderRoomQueue();
+  try{
+    const res=await fetch('/.netlify/functions/analyze-room',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({imageBase64:orig.base64,mimeType:orig.mimeType,roomName:room.roomName})
+    });
+    if(res.ok){
+      const data=await res.json();
+      room.spatialAnalysis=data.analysis||null;
+    }
+  }catch(e){ console.log('Spatial analysis failed silently:', e.message); }
+  room.spatialStatus=room.spatialAnalysis?'done':null;
+}
+
 async function stageRoom(roomId,iterNote){
   const room=SESSION.rooms.find(r=>r.id===roomId);
   const orig=SESSION.originals.find(o=>o.id===room.originalId);
   if(!room||!orig)return;
+  // Run spatial analysis first (non-blocking if it fails)
+  if(!room.spatialAnalysis&&!iterNote){
+    await analyzeRoomSpatial(room,orig);
+  }
   room.status='processing';renderRoomQueue();
   try{
     const b64=await callStageAPI(orig.base64,orig.mimeType,buildInteriorPrompt(room,iterNote,'low'),'low');

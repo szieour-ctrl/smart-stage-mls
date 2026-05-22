@@ -690,13 +690,44 @@ function renderRoomQueue(){
       <button class="btn btn-primary btn-sm" onclick="iterateRoom('${room.id}')">Re-Stage Draft</button>
     </div>`:'';
     const finalHtml=room.status==='done'?renderFinalPanel(room.id,null):'';
+    // Replicate test panel
+    const repBtn=(()=>{
+      if(!room.replicateStatus||room.replicateStatus==='error')
+        return `<div style="background:#f0f4ff;border-top:1px solid #c8d4f0;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#4a5fa5;">🧪 Engine Test</span>
+          <span style="font-size:0.75rem;color:var(--muted);">Run same photo through Replicate SDXL Inpainting for comparison</span>
+          <button class="btn btn-sm" style="background:#4a5fa5;color:#fff;" onclick="stageRoomReplicate('${room.id}')">Test Replicate Engine</button>
+          ${room.replicateStatus==='error'?'<span style="font-size:0.72rem;color:var(--danger);">⚠ Error — retry available</span>':''}
+        </div>`;
+      if(room.replicateStatus==='processing')
+        return `<div style="background:#f0f4ff;border-top:1px solid #c8d4f0;padding:10px 16px;display:flex;align-items:center;gap:8px;">
+          <span class="spinner" style="border-top-color:#4a5fa5;border-color:#c8d4f0;"></span>
+          <span style="font-size:0.8rem;color:#4a5fa5;">Replicate SDXL generating — typically 5-15 seconds...</span>
+        </div>`;
+      if(room.replicateStatus==='done'&&room.replicateBase64)
+        return `<div style="padding:16px;background:#f0f4ff;border-top:1px solid #c8d4f0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="background:#4a5fa5;color:#fff;font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;">Replicate SDXL</span>
+            <span style="font-size:0.72rem;color:var(--muted);">Compare with gpt-image-1 draft above — which engine gives better results?</span>
+          </div>
+          <div class="result-pair">
+            <div class="result-img-wrap"><img src="${orig.dataUrl}" /><div class="result-img-badge">Original</div></div>
+            <div class="result-img-wrap"><img src="data:image/jpeg;base64,${room.replicateBase64}" /><div class="result-img-badge" style="background:rgba(74,95,165,0.9);color:#fff;">Replicate SDXL</div></div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="downloadB64('data:image/jpeg;base64,'+SESSION.rooms.find(r=>r.id==='${room.id}').replicateBase64,'REPLICATE_${room.roomName.replace(/\s+/g,'')}_'+bName(getOrigName('${room.id}'))+'.jpg')">↓ Replicate Result</button>
+            <button class="btn btn-ghost btn-sm" onclick="SESSION.rooms.find(r=>r.id==='${room.id}').replicateStatus=null;renderRoomQueue();">Run Again</button>
+          </div>
+        </div>`;
+      return '';
+    })();
     return `<div class="room-card ${isAnchor?'is-anchor':''}" id="card-${room.id}">
       <div class="room-card-header"><img class="room-card-thumb" src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to set Shot Focus" />
       <div class="room-card-info"><div class="room-card-name">${room.roomName} ${isAnchor?'<span class="anchor-badge">Design Anchor</span>':''}</div>
       ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}${sfBadge}
       <div class="room-card-status ${room.status}">${statusLabel}</div></div>
       <div class="room-card-actions">${actions}${modeToggle}</div></div>
-      ${resultHtml}${iterHtml}${finalHtml}</div>`;
+      ${resultHtml}${iterHtml}${finalHtml}${repBtn}</div>`;
   }).join('');
 }
 
@@ -837,6 +868,51 @@ async function callStageAPI(imageBase64,mimeType,prompt,quality){
     if(err.name==='AbortError')throw new Error('Request timed out — please try again.');
     throw err;
   }
+}
+
+
+// ── Replicate SDXL Inpainting engine ─────────────────────────────────────────
+async function callReplicateAPI(imageBase64,mimeType,prompt){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),120000);
+  try{
+    const res=await fetch('/.netlify/functions/stage-replicate',{
+      method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
+      body:JSON.stringify({imageBase64,mimeType,stagingPrompt:prompt})
+    });
+    clearTimeout(timer);
+    if(!res.ok){
+      const txt=await res.text();
+      if(txt.trim().startsWith('<')){throw new Error('Replicate request timed out.');}
+      let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Replicate error: '+txt.slice(0,100));}
+      throw new Error(data.error||'Replicate API error');
+    }
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    return data.stagedBase64;
+  }catch(err){
+    clearTimeout(timer);
+    if(err.name==='AbortError')throw new Error('Replicate request timed out.');
+    throw err;
+  }
+}
+async function stageRoomReplicate(roomId){
+  const room=SESSION.rooms.find(r=>r.id===roomId);
+  const orig=SESSION.originals.find(o=>o.id===room.originalId);
+  if(!room||!orig)return;
+  room.replicateStatus='processing';room.replicateBase64=null;
+  renderRoomQueue();
+  try{
+    const i=SESSION.intake;
+    const sf=room.shotFocus?'Focus: '+room.shotFocus+'. ':'';
+    const rules=ROOM_STAGING_RULES[room.roomName]||'';
+    const prompt=(sf+'Professional real estate virtual staging, '+room.roomName+'. '+i.style_label+' style. '+i.palette_label+' color palette. '+i.buyer_label+' buyer. Add realistic furniture, rugs, art, plants. Preserve all architecture, windows, cabinetry, appliances, flooring exactly. Photorealistic MLS marketing photography.'+(rules?'\n'+rules:'')).trim();
+    const b64=await callReplicateAPI(orig.base64,orig.mimeType,prompt);
+    room.replicateBase64=b64;room.replicateStatus='done';
+    await resizeToMatch(room,orig,null,'replicateBase64',b64);
+    showToast('✓ Replicate SDXL complete — compare below.','success');
+    renderRoomQueue();
+  }catch(err){room.replicateStatus='error';renderRoomQueue();showToast('Replicate error: '+err.message,'error');}
 }
 
 // ══════════════════════════════════════════

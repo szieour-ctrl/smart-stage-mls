@@ -942,7 +942,8 @@ async function callReplicateAPI(imageBase64,mimeType,prompt){
     }
     const data=await res.json();
     if(data.error)throw new Error(data.error);
-    return data.stagedBase64;
+    if(!data.stagedBase64)throw new Error('No image returned from Replicate');
+    return data; // return full response including maskRegions, roomDescription, stagingNote
   }catch(err){
     clearTimeout(timer);
     if(err.name==='AbortError')throw new Error('Replicate request timed out.');
@@ -960,12 +961,26 @@ async function stageRoomReplicate(roomId){
     const sf=room.shotFocus?'Focus: '+room.shotFocus+'. ':'';
     const rules=ROOM_STAGING_RULES[room.roomName]||'';
     const prompt=(sf+'Professional real estate virtual staging, '+room.roomName+'. '+i.style_label+' style. '+i.palette_label+' color palette. '+i.buyer_label+' buyer. Add realistic furniture, rugs, art, plants. Preserve all architecture, windows, cabinetry, appliances, flooring exactly. Photorealistic MLS marketing photography.'+(rules?'\n'+rules:'')).trim();
-    const b64=await callReplicateAPI(orig.base64,orig.mimeType,prompt);
-    room.replicateBase64=b64;room.replicateStatus='done';
-    await resizeToMatch(room,orig,null,'replicateBase64',b64);
+    // Pass roomName so Claude Vision knows what room it's analyzing
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),120000);
+    const res=await fetch('/.netlify/functions/stage-replicate',{
+      method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
+      body:JSON.stringify({imageBase64:orig.base64,mimeType:orig.mimeType,stagingPrompt:prompt,roomName:room.roomName})
+    });
+    clearTimeout(timer);
+    if(!res.ok){const txt=await res.text();throw new Error(txt.startsWith('<')?'Replicate timed out':(JSON.parse(txt).error||'Replicate error'));}
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    if(!data.stagedBase64)throw new Error('No image returned from Replicate');
+    room.replicateBase64=data.stagedBase64;
+    room.replicateStatus='done';
+    // Store mask analysis info for display
+    if(data.roomDescription||data.maskRegions){
+      room.replicateMaskInfo=(data.roomDescription||'')+(data.stagingNote?' · '+data.stagingNote:'')+(data.maskRegions?' ('+data.maskRegions+' fill region'+(data.maskRegions!==1?'s':'')+')':'');
+    }
+    await resizeToMatch(room,orig,null,'replicateBase64',data.stagedBase64);
     showToast('✓ Replicate SDXL complete — compare below.','success');
-    // Store mask info for display
-    if(data.roomDescription) room.replicateMaskInfo = data.roomDescription + (data.stagingNote?' · '+data.stagingNote:'') + ' ('+data.maskRegions+' fill region'+(data.maskRegions!==1?'s':'')+')';
     renderRoomQueue();
   }catch(err){room.replicateStatus='error';renderRoomQueue();showToast('Replicate error: '+err.message,'error');}
 }

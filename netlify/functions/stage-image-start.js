@@ -1,5 +1,4 @@
 const https = require("https");
-const FormData = require("form-data");
 
 // ── Shared HTTPS helper ──────────────────────────────────────────────────────
 function httpsRequest(options, body) {

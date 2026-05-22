@@ -17,6 +17,18 @@
 [functions."analyze-room"]
   timeout = 10
 
+[functions."generate-staging-prompt"]
+  timeout = 20
+
+[functions."stage-decor8"]
+  timeout = 26
+
+[functions."extract-staging-dna"]
+  timeout = 15
+
+[functions."serve-image"]
+  timeout = 10
+
 [[headers]]
   for = "/*"
   [headers.values]

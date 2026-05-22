@@ -28,13 +28,13 @@ exports.handler = async (event) => {
   try {
     const {
       imageBase64, mimeType,
-      roomName, roomType,
+      roomName, roomType, openPlanZones,
       designStyle, colorPalette,
       buyerProfile, desiredFeeling,
       stagingIntensity, mlsMode,
       iterationNote, priorStagingDescription,
       shotFocus, adjacentRooms,
-      anchorDNA,
+      anchorDNA, stagingDNA, dnaTier,
     } = JSON.parse(event.body);
 
     const claudeKey = process.env.ANTHROPIC_API_KEY;
@@ -93,7 +93,20 @@ SESSION PARAMETERS:
 - MLS Mode: ${mlsMode ? 'YES — photorealistic, architecturally accurate' : 'Standard'}
 ${shotFocus ? `- Shot Focus: ${shotFocus}` : ''}
 ${adjacentRooms?.length ? `- Adjacent Rooms Visible: ${adjacentRooms.join(', ')}` : ''}
-${anchorDNA ? `- Design Continuity (match this from approved rooms): ${anchorDNA}` : ''}
+${openPlanZones ? `- OPEN PLAN ZONES TO STAGE:\n${openPlanZones}` : ''}
+${anchorDNA && dnaTier === 'full' ? `- OPEN PLAN FURNITURE DNA — MATCH EXACTLY:
+${anchorDNA}
+- Sofa: ${stagingDNA?.sofa || 'match open plan'}
+- Dining set: ${stagingDNA?.diningTable || 'match open plan'} with ${stagingDNA?.diningChairs || 'matching chairs'}
+- Bar stools: ${stagingDNA?.barStools || 'match open plan style'}
+- Area rug: ${stagingDNA?.areaRug || 'match open plan'}
+- Wood tones: ${stagingDNA?.woodTones || 'match open plan'}
+- Metal finishes: ${stagingDNA?.metalFinishes || 'match open plan'}
+- Color palette: ${Array.isArray(stagingDNA?.colorPalette)?stagingDNA.colorPalette.join(', '):(stagingDNA?.colorPalette||'match open plan')}` : ''}
+${anchorDNA && dnaTier === 'style' ? `- STYLE CONTINUITY (same home — different room):
+${anchorDNA}
+Do NOT replicate the living/dining furniture. Use appropriate furniture for this room type.
+MATCH ONLY: wood tones, metal finishes, color palette, accessory density and restraint.` : ''}
 
 ANALYZE THE PHOTO AND IDENTIFY:
 1. Camera position and direction
@@ -103,6 +116,16 @@ ANALYZE THE PHOTO AND IDENTIFY:
 5. All permanent fixtures that must be preserved exactly
 6. Visible adjacent spaces that need appropriate (not overstaged) treatment
 7. Natural light direction and quality
+
+${openPlanZones ? `THIS IS AN OPEN PLAN SPACE. You MUST stage ALL zones:
+${openPlanZones}
+
+CRITICAL OPEN PLAN RULES:
+- Identify which ceiling fixture corresponds to each zone
+- Dining table ALWAYS goes under the dining chandelier/pendant
+- Sofa ALWAYS faces the fireplace or feature wall — never placed in dining zone
+- Kitchen bar seating ALWAYS on far side of island (away from camera)
+- Each zone must be fully staged — do not leave any zone empty` : ''}
 
 GENERATE A STAGING PROMPT that specifies:
 - Exact furniture pieces and their precise placement locations

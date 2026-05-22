@@ -841,12 +841,11 @@ LIGHTING ONLY: Blue-hour sky, warm interior window glow, subtle path lighting, l
 }
 
 // ══════════════════════════════════════════
-// API CALL — with retry on timeout
+// API CALL — auto-retry up to 3x on timeout
 // ══════════════════════════════════════════
-async function callStageAPI(imageBase64,mimeType,prompt,quality){
+async function callStageAPIOnce(imageBase64,mimeType,prompt,quality){
   const controller=new AbortController();
-  // 55-second client timeout — longer than Netlify limit so we get the actual error
-  const timer=setTimeout(()=>controller.abort(),55000);
+  const timer=setTimeout(()=>controller.abort(),28000);
   try{
     const res=await fetch('/.netlify/functions/stage-image-start',{
       method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
@@ -855,17 +854,30 @@ async function callStageAPI(imageBase64,mimeType,prompt,quality){
     clearTimeout(timer);
     if(!res.ok){
       const txt=await res.text();
-      // Check if it's an HTML error page (timeout)
-      if(txt.trim().startsWith('<')){throw new Error('Request timed out — please try again. High quality images take longer to generate.');}
-      const data=JSON.parse(txt);
-      throw new Error(data.error||'API error');
+      if(txt.trim().startsWith('<'))throw new Error('TIMEOUT');
+      let d;try{d=JSON.parse(txt);}catch(e){throw new Error('TIMEOUT');}
+      throw new Error(d.error||'API error');
     }
     const data=await res.json();
     if(data.error)throw new Error(data.error);
     return data.stagedBase64;
   }catch(err){
     clearTimeout(timer);
-    if(err.name==='AbortError')throw new Error('Request timed out — please try again.');
+    if(err.name==='AbortError'||err.message==='TIMEOUT')throw new Error('TIMEOUT');
+    throw err;
+  }
+}
+async function callStageAPI(imageBase64,mimeType,prompt,quality,attempt=1){
+  try{
+    return await callStageAPIOnce(imageBase64,mimeType,prompt,quality);
+  }catch(err){
+    if(err.message==='TIMEOUT'&&attempt<=3){
+      console.log('Timeout — auto-retrying (attempt '+attempt+'/3)...');
+      showToast('Timeout — auto-retrying ('+attempt+'/3)...');
+      await new Promise(r=>setTimeout(r,1500));
+      return callStageAPI(imageBase64,mimeType,prompt,quality,attempt+1);
+    }
+    if(err.message==='TIMEOUT')throw new Error('Request timed out after 3 attempts. OpenAI is slow right now — please try again in a moment.');
     throw err;
   }
 }

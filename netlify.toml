@@ -11,6 +11,9 @@
 [functions."stage-image-start"]
   timeout = 26
 
+[functions."stage-replicate"]
+  timeout = 26
+
 [[headers]]
   for = "/*"
   [headers.values]

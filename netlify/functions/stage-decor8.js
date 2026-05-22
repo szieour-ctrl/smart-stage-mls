@@ -19,57 +19,31 @@ function httpsRequest(options, body) {
   });
 }
 
-// ── Upload image to Netlify Blobs for temporary public URL ────────────────────
-async function uploadToNetlifyBlobs(imageBase64, mimeType, siteId, token) {
-  const imageBuffer = Buffer.from(imageBase64, "base64");
-  const key = `staging-temp-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-  const ext = mimeType === "image/png" ? "png" : "jpg";
-  const blobKey = `${key}.${ext}`;
+// ── Upload image via serve-image proxy to get a public URL ───────────────────
+// serve-image.js stores in Netlify Blobs (with auth) and serves via public endpoint
+async function getImageUrl(imageBase64, mimeType) {
+  const siteUrl = process.env.URL || "https://smart-stage-ai.netlify.app";
+  const proxyUrl = `${siteUrl}/.netlify/functions/serve-image`;
 
-  // Netlify Blobs REST API
-  const result = await new Promise((resolve, reject) => {
-    const options = {
-      hostname: "api.netlify.com",
-      path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent(blobKey)}`,
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": mimeType || "image/jpeg",
-        "Content-Length": imageBuffer.length,
-      }
-    };
-    const req = https.request(options, (res) => {
-      const chunks = [];
-      res.on("data", c => chunks.push(c));
-      res.on("end", () => {
-        const raw = Buffer.concat(chunks).toString("utf8");
-        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
-        catch(e) { resolve({ status: res.statusCode, body: { raw } }); }
-      });
-    });
-    req.on("error", reject);
-    req.write(imageBuffer);
-    req.end();
-  });
+  const payload = JSON.stringify({ imageBase64, mimeType: mimeType || "image/jpeg" });
 
-  if (result.status !== 200 && result.status !== 201 && result.status !== 204) {
-    throw new Error(`Blob upload failed: ${result.status} ${JSON.stringify(result.body).slice(0,200)}`);
+  const result = await httpsRequest({
+    hostname: new URL(proxyUrl).hostname,
+    path: "/.netlify/functions/serve-image",
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(payload),
+    }
+  }, payload);
+
+  if (result.status !== 200) {
+    throw new Error(`serve-image proxy failed: ${result.status} ${JSON.stringify(result.body).slice(0,200)}`);
   }
 
-  // Public URL for Netlify Blobs
-  const publicUrl = `https://api.netlify.com/api/v1/sites/${siteId}/blobs/${encodeURIComponent(blobKey)}`;
-  return { url: publicUrl, key: blobKey };
-}
-
-// ── Upload via simple fetch-style multipart to get a usable image URL ─────────
-// Alternative: use a data URL proxy approach via our own endpoint
-async function getImageUrl(imageBase64, mimeType, siteId, netlifyToken) {
-  try {
-    return await uploadToNetlifyBlobs(imageBase64, mimeType, siteId, netlifyToken);
-  } catch (err) {
-    console.error("Netlify Blobs upload failed:", err.message);
-    throw new Error("Could not create public image URL for Decor8: " + err.message);
-  }
+  const { url, key } = result.body;
+  if (!url) throw new Error("No public URL returned from serve-image proxy");
+  return { url, key };
 }
 
 // ── Call Decor8 staging API ───────────────────────────────────────────────────
@@ -154,18 +128,12 @@ exports.handler = async (event) => {
     if (!imageBase64) return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing imageBase64" }) };
 
     const decor8Key = process.env.DECOR8_API_KEY;
-    const netlifyToken = process.env.NETLIFY_ACCESS_TOKEN;
-    const siteId = process.env.NETLIFY_SITE_ID;
-
     if (!decor8Key) return { statusCode: 500, headers, body: JSON.stringify({ error: "DECOR8_API_KEY not configured" }) };
-    if (!netlifyToken || !siteId) {
-      return { statusCode: 500, headers, body: JSON.stringify({ error: "NETLIFY_ACCESS_TOKEN and NETLIFY_SITE_ID required for image hosting" }) };
-    }
 
-    // Step 1: Upload image to get public URL
+    // Step 1: Upload image via proxy to get public URL
     console.log("Uploading image for public URL...");
-    const { url: imageUrl, key: blobKey } = await getImageUrl(imageBase64, mimeType, siteId, netlifyToken);
-    console.log("Image URL obtained");
+    const { url: imageUrl, key: blobKey } = await getImageUrl(imageBase64, mimeType);
+    console.log("Image URL:", imageUrl);
 
     // Step 2: Call Decor8
     console.log("Calling Decor8 API...");

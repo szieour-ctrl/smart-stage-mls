@@ -116,24 +116,28 @@ function buildSmartMaskPNG(width, height, fillRegions) {
 async function analyzePhotoForMask(imageBase64, mimeType, roomName, claudeKey) {
   const prompt = `You are analyzing a real estate listing photo of a ${roomName || "room"} to generate an inpainting mask for AI virtual staging.
 
-Your job: identify ONLY the genuinely empty floor areas where furniture can be placed. Everything else must be preserved exactly.
+Your job: identify the empty floor areas where furniture can be placed. Be GENEROUS — virtual staging needs meaningful floor space to work.
 
-PRESERVE (return as nothing — these must stay black in the mask):
-- All kitchen islands, peninsulas, countertops
-- All appliances (refrigerator, dishwasher, oven, microwave, range)
-- All cabinetry upper and lower
-- Fireplace, fireplace surround, mantel
-- All windows and window frames
-- All doors and door frames  
-- All walls, columns, structural elements
-- Ceiling and upper wall areas
-- Any existing furniture or fixtures
+ALWAYS PRESERVE (must stay black — never include these as fill regions):
+- Kitchen islands, peninsulas, countertops, base cabinets
+- Appliances (refrigerator, dishwasher, oven, microwave, range hood)
+- Upper wall cabinets
+- Fireplace box, surround, and mantel
+- Window frames and glass
+- Door frames
+- Structural walls, columns, load-bearing elements
+- Ceiling (top 15% of image always black)
 - The sink, faucet, hardware
 
-FILL (return as white regions — only truly empty floor space):
-- Open floor areas with NO existing fixtures above them
-- The specific floor zones where bar stools, sofas, dining tables would realistically sit
-- Must be clear floor with no permanent fixture directly above or adjacent
+FILL (mark as white — empty floor space where furniture goes):
+- Any open floor area NOT directly occupied by a permanent fixture
+- Floor space around and behind the island (bar stool side, living room side)
+- The entire living/great room floor area visible beyond the kitchen
+- Dining area floor space
+- Any empty wall areas in the lower 2/3 of the image (for sofas against walls)
+- Be generous — if floor is visible and clear of permanent fixtures, include it
+- Bar stool area: the side of the island away from camera (far side) is a FILL region
+- Living room floor beyond island: large FILL region
 
 Return ONLY valid JSON, no markdown:
 {
@@ -154,7 +158,10 @@ Return ONLY valid JSON, no markdown:
 }
 
 CRITICAL: rowStart/rowEnd are vertical (0=top, 1=bottom). colStart/colEnd are horizontal (0=left, 1=right).
-Be CONSERVATIVE — it is better to mask too little than too much. If unsure whether an area has a fixture above it, do NOT include it as a fill region.`;
+Be GENEROUS with floor space — virtual staging requires meaningful area to place furniture. 
+The living/great room area visible beyond a kitchen island should be ONE LARGE fill region covering most of that floor space.
+Aim for fill regions that cover at least 15-20% of image area each. Small regions produce no visible furniture.
+Only exclude areas with permanent fixtures DIRECTLY in them.`;
 
   const payload = JSON.stringify({
     model: "claude-opus-4-5",
@@ -270,6 +277,15 @@ exports.handler = async (event) => {
 
     // Step 6: Start Replicate prediction
     console.log("Starting Replicate prediction...");
+    // Replicate SDXL inpainting requires dimensions to be multiples of 8
+    // Use original image dimensions clamped to model max (1024)
+    const outW = Math.min(dims.width, 1024);
+    const outH = Math.min(dims.height, 1024);
+    // Round to nearest 8
+    const safeW = Math.floor(outW / 8) * 8;
+    const safeH = Math.floor(outH / 8) * 8;
+    console.log(`Output dimensions: ${safeW}x${safeH}`);
+
     const payload = JSON.stringify({
       version: "95b7223104132402a9ae91cc677285bc5eb997834bd2349fa486f53910fd68b3",
       input: {
@@ -282,6 +298,8 @@ exports.handler = async (event) => {
         strength: 0.99,
         num_outputs: 1,
         scheduler: "DPMSolverMultistep",
+        width: safeW,
+        height: safeH,
       }
     });
 

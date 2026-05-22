@@ -277,13 +277,11 @@ exports.handler = async (event) => {
 
     // Step 6: Start Replicate prediction
     console.log("Starting Replicate prediction...");
-    // Replicate SDXL inpainting requires dimensions to be multiples of 8
-    // Use original image dimensions clamped to model max (1024)
-    const outW = Math.min(dims.width, 1024);
-    const outH = Math.min(dims.height, 1024);
-    // Round to nearest 8
-    const safeW = Math.floor(outW / 8) * 8;
-    const safeH = Math.floor(outH / 8) * 8;
+    // Replicate SDXL requires dimensions from exact allowed list (multiples of 64, up to 1024)
+    const ALLOWED = [64,128,192,256,320,384,448,512,576,640,704,768,832,896,960,1024];
+    const snapTo = (v) => ALLOWED.reduce((a,b) => Math.abs(b-v)<Math.abs(a-v)?b:a);
+    const safeW = snapTo(Math.min(dims.width, 1024));
+    const safeH = snapTo(Math.min(dims.height, 1024));
     console.log(`Output dimensions: ${safeW}x${safeH}`);
 
     const payload = JSON.stringify({

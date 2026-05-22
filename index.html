@@ -243,13 +243,146 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 // ══════════════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════════════
+// ── Room Options — Display label maps directly to Decor8 room_type ─────────────
+// Format: "Display Name || decor8_room_type"
+// What you select = what gets sent to Decor8. No hidden translation.
 const ROOM_OPTIONS = [
-  "— Floor Plan / Reference Only —",
-  "Entry","Great Room","Living Room","Family Room","Kitchen","Dining Room",
-  "Primary Suite","Primary Bath","Bedroom 2","Bedroom 3","Bedroom 4",
-  "Office","Loft","Flex Room","Laundry","Powder Room","Garage",
-  "Covered Patio","Backyard","Exterior Front","Pool Area","Side Yard","Other"
+  "── REFERENCE ────────────────── || __fp__",
+  "Floor Plan / Reference Only || __fp__",
+
+  "── OPEN PLAN (Multi-Zone) ────── || __fp__",
+  "Open Plan: Kitchen + Dining + Great Room || openplan",
+  "Open Plan: Kitchen + Great Room || openplan",
+  "Open Plan: Dining + Great Room || openplan",
+  "Open Plan: Kitchen + Living Room || openplan",
+
+  "── MAIN LIVING ─────────────────── || __fp__",
+  "Great Room / Living Room || livingroom",
+  "Family Room || familyroom",
+  "Dining Room || diningroom",
+  "Kitchen || kitchen",
+  "Entry / Foyer || foyer",
+  "Home Bar || homebar",
+  "Reading Nook || readingnook",
+  "Sun Room || sunroom",
+  "Basement || basement",
+  "Loft || familyroom",
+  "Flex Room || familyroom",
+
+  "── BEDROOM / BATH ──────────────── || __fp__",
+  "Primary Suite / Bedroom || bedroom",
+  "Bedroom 2 || bedroom",
+  "Bedroom 3 || bedroom",
+  "Bedroom 4 || bedroom",
+  "Kids Room || kidsroom",
+  "Primary Bath / Bathroom || bathroom",
+  "Powder Room || powderroom",
+  "Walk-In Closet || walkincloset",
+
+  "── OFFICE / STUDY ──────────────── || __fp__",
+  "Office || office",
+  "Study Room || study_room",
+
+  "── UTILITY ─────────────────────── || __fp__",
+  "Laundry Room || laundryroom",
+  "Mud Room || mudroom",
+  "Garage || garage",
+  "Gym || gym",
+  "Toy Room || toyroom",
+  "Balcony || balcony",
+
+  "── EXTERIOR ────────────────────── || __fp__",
+  "Covered Patio || back_patio",
+  "Backyard / Back Porch || back_porch",
+  "Exterior Front / Front Porch || front_porch",
+  "Pool Area || back_patio",
+  "Side Yard || back_porch",
 ];
+
+// ── Parse room option value → {label, decor8Type, isFloorplan, isExterior} ───
+function parseRoomOption(val) {
+  if (!val || val.startsWith('──')) return null; // divider rows
+  const parts = val.split(' || ');
+  const label = parts[0].trim();
+  const decor8Type = parts[1]?.trim() || 'livingroom';
+  if (decor8Type === '__fp__') return { label, decor8Type: 'floorplan', isFloorplan: true, isExterior: false, isOpenPlan: false };
+  const EXTERIOR_TYPES = ['back_patio', 'back_porch', 'front_porch'];
+  const isExterior = EXTERIOR_TYPES.includes(decor8Type);
+  const isOpenPlan = decor8Type === 'openplan';
+  return { label, decor8Type, isFloorplan: false, isExterior, isOpenPlan };
+}
+
+// ── Open plan zone descriptions for Claude prompt ─────────────────────────────
+function getOpenPlanZones(label) {
+  if (label.includes('Kitchen + Dining + Great Room')) return 'Three zones: (1) Kitchen zone — island with sink/appliances, bar seating on FAR side from camera; (2) Dining zone — rectangular table under chandelier/pendant fixture, 6-8 chairs; (3) Great Room/Living zone — sofa facing fireplace, accent chair, coffee table, area rug';
+  if (label.includes('Kitchen + Great Room')) return 'Two zones: (1) Kitchen zone — island with appliances, bar seating on far side from camera; (2) Great Room zone — sofa facing fireplace or feature wall, accent chair, coffee table, area rug';
+  if (label.includes('Dining + Great Room')) return 'Two zones: (1) Dining zone — rectangular table under chandelier, 6 chairs; (2) Great Room zone — sofa facing fireplace, accent chair, coffee table, area rug';
+  if (label.includes('Kitchen + Living Room')) return 'Two zones: (1) Kitchen zone — island with appliances, bar seating on far side; (2) Living zone — sofa arrangement facing focal wall, coffee table, area rug';
+  return null;
+}
+// ── Decor8 API mappings ───────────────────────────────────────────────────────
+const DECOR8_ROOM_TYPE = {
+  "Entry": "foyer", "Foyer": "foyer",
+  "Great Room": "openplan", "Living Room": "livingroom", "Family Room": "familyroom",
+  "Kitchen": "kitchen", "Dining Room": "diningroom",
+  "Primary Suite": "bedroom", "Bedroom 2": "bedroom", "Bedroom 3": "bedroom", "Bedroom 4": "bedroom",
+  "Primary Bath": "bathroom", "Powder Room": "powderroom",
+  "Office": "office", "Study": "office", "Loft": "familyroom", "Flex Room": "familyroom",
+  "Laundry": "laundryroom", "Garage": "garage",
+  "Covered Patio": "back_patio", "Backyard": "back_porch",
+  "Exterior Front": "front_porch", "Pool Area": "back_patio", "Side Yard": "back_porch",
+  "Other": "livingroom",
+};
+
+// If Kitchen visible with Great Room/Dining → openplan
+// Rooms that share the open plan DNA (same physical space)
+const OPENPLAN_CONNECTED_TYPES = ["openplan","livingroom","diningroom","kitchen","familyroom"];
+
+// Rooms that get Style DNA only (separate physical spaces)
+const STYLE_DNA_ONLY_TYPES = ["bedroom","bathroom","powderroom","office","study_room",
+  "laundryroom","mudroom","garage","gym","toyroom","kidsroom","walkincloset",
+  "sunroom","readingnook","basement","balcony","foyer",
+  "back_patio","back_porch","front_porch"];
+
+const OPENPLAN_ROOMS = ["Great Room","Kitchen","Dining Room","Living Room","Family Room"];
+
+const DECOR8_DESIGN_STYLE = {
+  "Organic Modern": "organicmodern",
+  "RH Luxury": "luxemodern",
+  "Contemporary": "contemporary",
+  "Japandi": "japandi",
+  "Transitional": "transitional",
+  "Coastal California": "coastal",
+};
+
+const DECOR8_COLOR_SCHEME = {
+  "Warm Neutrals": "COLOR_SCHEME_9",
+  "Bright Airy": "COLOR_SCHEME_0",
+  "Earth Tones": "COLOR_SCHEME_1",
+  "Soft Luxury": "COLOR_SCHEME_12",
+  "Moody Executive": "COLOR_SCHEME_13",
+  "Organic Natural": "COLOR_SCHEME_8",
+};
+
+// Returns 'full' (open plan connected), 'style' (separate room), or 'none' (exterior/reference)
+function getDNATier(room) {
+  if (!room || room.isReference) return 'none';
+  if (room.isExterior) return 'none';
+  const dt = room.decor8Type;
+  if (!dt || dt === 'floorplan') return 'none';
+  if (OPENPLAN_CONNECTED_TYPES.includes(dt)) return 'full';
+  if (STYLE_DNA_ONLY_TYPES.includes(dt)) return 'style';
+  return 'style'; // default to style for anything else
+}
+
+function getDecor8RoomType(roomName, adjacentRooms) {
+  // If this room connects to other main living spaces, use openplan
+  const isOpen = OPENPLAN_ROOMS.includes(roomName) &&
+    adjacentRooms?.some(r => OPENPLAN_ROOMS.includes(r));
+  if (isOpen) return "openplan";
+  return DECOR8_ROOM_TYPE[roomName] || "livingroom";
+}
+
 const EXTERIOR_KEYWORDS = ["exterior","backyard","patio","front yard","side yard","pool","garden","outdoor","landscape","driveway","covered patio"];
 
 const EXT_ENHANCEMENTS = [
@@ -310,6 +443,8 @@ const DEFAULT_HINTS = ["Specify which room is the main focus","Describe what the
 const SESSION = {
   originals:[],floorplanRoomMap:null,photoRoomMap:{},
   intake:{},rooms:[],anchorRoomId:null,
+  stagingDNA: null,        // Extracted from staged Open Plan image
+  openPlanRoomId: null,    // Room ID of the Open Plan — must be staged first
 };
 let _lbRoomId = null;
 
@@ -506,7 +641,11 @@ function updatePhotoRoom(photoId,roomId){
 }
 function showMappingManual(){
   const photos=SESSION.originals.filter(o=>!o.isFloorplan);
-  const roomOpts=ROOM_OPTIONS.map((r,i)=>`<option value="${i===0?'__fp__':r}">${r}</option>`).join('');
+  const roomOpts=ROOM_OPTIONS.map(r=>{
+    const isDivider = r.startsWith('──');
+    const val = isDivider ? '' : r;
+    return `<option value="${val}" ${isDivider?'disabled style="color:#999;font-size:0.75rem;"':''}>${r.split(' || ')[0]}</option>`;
+  }).join('');
   document.getElementById('mapping-body').innerHTML=`
     <div class="panel-sub" style="margin-bottom:16px;">Label each photo. "Floor Plan / Reference Only" marks a photo as reference — it won't be staged. Click thumbnails to set Shot Focus.</div>
     <div class="no-fp-label-list">
@@ -521,14 +660,24 @@ function showMappingManual(){
 }
 function updatePhotoRoomManual(photoId,val){
   if(!val){delete SESSION.photoRoomMap[photoId];return;}
-  if(val==='__fp__'){
+  const parsed = parseRoomOption(val);
+  if(!parsed) return; // divider row — ignore
+  if(parsed.isFloorplan){
     const orig=SESSION.originals.find(o=>o.id===photoId);
     if(orig)orig.isFloorplan=true;
-    SESSION.photoRoomMap[photoId]={roomId:'floorplan',roomName:'Floor Plan',adjacentNames:[],isExterior:false,isReference:true};
+    SESSION.photoRoomMap[photoId]={roomId:'floorplan',roomName:'Floor Plan',adjacentNames:[],isExterior:false,isReference:true,decor8Type:'floorplan'};
     return;
   }
-  const isExt=EXTERIOR_KEYWORDS.some(k=>val.toLowerCase().includes(k));
-  SESSION.photoRoomMap[photoId]={...SESSION.photoRoomMap[photoId]||{},roomId:val.toLowerCase().replace(/\s+/g,'-'),roomName:val,adjacentNames:[],isExterior:isExt,isReference:false};
+  SESSION.photoRoomMap[photoId]={
+    ...SESSION.photoRoomMap[photoId]||{},
+    roomId: parsed.decor8Type,
+    roomName: parsed.label,
+    decor8Type: parsed.decor8Type,
+    adjacentNames:[],
+    isExterior: parsed.isExterior,
+    isOpenPlan: parsed.isOpenPlan,
+    isReference:false
+  };
 }
 function confirmMapping(){buildSummary();buildRoomQueue();showStep('step-staging');}
 
@@ -591,9 +740,19 @@ function buildRoomQueue(){
   const photos=SESSION.originals.filter(o=>!o.isFloorplan);
   SESSION.rooms=photos.map(orig=>{
     const m=SESSION.photoRoomMap[orig.id];
-    return {id:'room_'+orig.id,originalId:orig.id,roomName:m?.roomName||orig.name,adjacentRooms:m?.adjacentNames||[],isExterior:m?.isExterior||false,isReference:m?.isReference||false,shotFocus:m?.shotFocus||'',status:'pending',stagedBase64:null,finalBase64:null,finalStatus:null,iterationNote:'',approvedDNA:null,extSelections:{},spatialAnalysis:null,spatialStatus:null};
+    const isOpenPlan=m?.isOpenPlan||false;
+    return {id:'room_'+orig.id,originalId:orig.id,roomName:m?.roomName||orig.name,decor8Type:m?.decor8Type||null,isOpenPlan,adjacentRooms:m?.adjacentNames||[],isExterior:m?.isExterior||false,isReference:m?.isReference||false,shotFocus:m?.shotFocus||'',status:'pending',stagedBase64:null,finalBase64:null,finalStatus:null,iterationNote:'',approvedDNA:null,extSelections:{},spatialAnalysis:null,spatialStatus:null,dnaStatus:null};
   });
+  // Track Open Plan room ID for enforcement
+  const openPlanRoom = SESSION.rooms.find(r => r.isOpenPlan);
+  SESSION.openPlanRoomId = openPlanRoom?.id || null;
   renderRoomQueue();
+}
+
+function isOpenPlanStaged() {
+  if (!SESSION.openPlanRoomId) return true; // No open plan in session — allow all
+  const opRoom = SESSION.rooms.find(r => r.id === SESSION.openPlanRoomId);
+  return opRoom?.status === 'done';
 }
 function toggleRoomMode(roomId,makeExt){
   const room=SESSION.rooms.find(r=>r.id===roomId);
@@ -668,11 +827,29 @@ function renderRoomQueue(){
     }
 
     // ── INTERIOR ──
-    const statusLabel={pending:'Ready to stage — click photo to set Shot Focus',processing:'Generating draft...',done:'✓ Draft complete',error:'⚠ Error — retry available'}[room.status];
+    const statusLabel={
+      pending:'Ready to stage — click photo to set Shot Focus',
+      processing: room.promptStatus || 'Staging in progress...',
+      done:'✓ Staged',
+      error:'⚠ Error — retry available'
+    }[room.status];
+    const dnaTierBadge=(()=>{
+      const tier=getDNATier(room);
+      if(room.isOpenPlan) return '';
+      if(tier==='full'&&SESSION.stagingDNA) return `<span style="font-size:0.6rem;background:#e8f4f0;color:var(--success);border:1px solid #b8ddd0;padding:1px 6px;border-radius:2px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Full DNA</span>`;
+      if(tier==='style'&&SESSION.stagingDNA) return `<span style="font-size:0.6rem;background:#f4f8fc;color:var(--sky);border:1px solid #cce0f0;padding:1px 6px;border-radius:2px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Style DNA</span>`;
+      return '';
+    })();
     const actions=(()=>{
-      if(room.status==='pending'||room.status==='error')return `
-        <button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>
-        <button class="btn btn-sm" style="background:#4a5fa5;color:#fff;" onclick="stageRoomReplicate('${room.id}')" title="Test Replicate SDXL engine with smart mask">🧪 Test Replicate</button>`;
+      if(room.status==='pending'||room.status==='error'){
+        const dnaTier = getDNATier(room);
+        const blocked = dnaTier === 'full' && !room.isOpenPlan && !isOpenPlanStaged();
+        if(blocked) return `
+          <div style="font-size:0.75rem;color:var(--muted);padding:4px 0;max-width:220px;line-height:1.4;">
+            🔒 Stage Open Plan first — this room shares its furniture DNA
+          </div>`;
+        return `<button class="btn btn-primary btn-sm" onclick="stageRoom('${room.id}')">Stage This Room</button>`;
+      }
       if(room.status==='processing')return `<button class="btn btn-outline btn-sm" disabled><span class="spinner"></span> Generating</button>`;
       if(room.status==='done')return `
         <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
@@ -681,8 +858,26 @@ function renderRoomQueue(){
         ${!isAnchor?`<button class="btn btn-ghost btn-sm" onclick="resetRoom('${room.id}')">Re-Stage</button>`:''}`;
       return '';
     })();
+    // DNA status display for open plan
+    const dnaPanel = room.isOpenPlan ? (()=>{
+      if(room.dnaStatus==='extracting') return `<div style="background:#f4faf7;border-top:1px solid #b8ddd0;padding:10px 16px;display:flex;align-items:center;gap:8px;"><span class="spinner spinner-green"></span><span style="font-size:0.8rem;color:var(--success);">Claude Vision reading staged image — extracting Design DNA for all rooms...</span></div>`;
+      if(room.dnaStatus==='done'&&SESSION.stagingDNA) return `<div style="background:#f4faf7;border-top:1px solid #b8ddd0;padding:12px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span style="background:var(--success);color:#fff;font-size:0.62rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;">✓ Design DNA Locked</span><span style="font-size:0.75rem;color:var(--success);">${SESSION.stagingDNA.overallStyle}</span></div>
+        <div style="font-size:0.75rem;color:var(--muted);line-height:1.6;">
+          <strong>Sofa:</strong> ${SESSION.stagingDNA.sofa||'—'} &nbsp;·&nbsp;
+          <strong>Dining:</strong> ${SESSION.stagingDNA.diningTable||'—'} &nbsp;·&nbsp;
+          <strong>Wood:</strong> ${SESSION.stagingDNA.woodTones||'—'} &nbsp;·&nbsp;
+          <strong>Metals:</strong> ${SESSION.stagingDNA.metalFinishes||'—'}<br>
+          <strong>Palette:</strong> ${Array.isArray(SESSION.stagingDNA.colorPalette)?SESSION.stagingDNA.colorPalette.join(', '):(SESSION.stagingDNA.colorPalette||'—')}
+        </div>
+        <div style="font-size:0.7rem;color:#888;margin-top:6px;">All other rooms will match this staging automatically.</div>
+      </div>`;
+      if(room.dnaStatus==='failed') return `<div style="background:#fff8e7;border-top:1px solid #f0d080;padding:10px 16px;font-size:0.75rem;color:#7a6000;">⚠ DNA extraction failed — other rooms will use style defaults. You can re-stage this room to retry.</div>`;
+      return '';
+    })() : '';
+
     const resultHtml=room.status==='done'?`<div class="result-viewer">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="tier-label tier-draft">Draft — Low Quality</span><span style="font-size:0.72rem;color:var(--muted);">Iterate freely. Generate Final when ready for MLS.</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="tier-label tier-draft">Staged — Decor8</span><span style="font-size:0.72rem;color:var(--muted);">Iterate with revision instructions below. Generate Final for highest resolution MLS download.</span></div>
       <div class="result-pair">
         <div class="result-img-wrap"><img src="${orig.dataUrl}" onclick="openLightbox('${room.id}')" title="Click to update Shot Focus" /><div class="result-img-badge">Original</div></div>
         <div class="result-img-wrap"><img src="data:image/jpeg;base64,${room.stagedBase64}" /><div class="result-img-badge staged">Virtually Staged · Draft</div></div>
@@ -733,7 +928,7 @@ function renderRoomQueue(){
       ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}${sfBadge}${spatialBadge}
       <div class="room-card-status ${room.status}">${statusLabel}</div></div>
       <div class="room-card-actions">${actions}${modeToggle}</div></div>
-      ${resultHtml}${iterHtml}${finalHtml}${repBtn}</div>`;
+      ${resultHtml}${dnaPanel}${iterHtml}${finalHtml}</div>`;
   }).join('');
 }
 
@@ -988,47 +1183,148 @@ async function stageRoomReplicate(roomId){
 // ══════════════════════════════════════════
 // STAGE ROOM
 // ══════════════════════════════════════════
-async function analyzeRoomSpatial(room, orig) {
-  if(room.spatialAnalysis) return; // already analyzed
-  room.spatialStatus='analyzing';
-  renderRoomQueue();
-  try{
-    const res=await fetch('/.netlify/functions/analyze-room',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({imageBase64:orig.base64,mimeType:orig.mimeType,roomName:room.roomName})
+// ── Extract Design DNA from staged Open Plan image ───────────────────────────
+async function extractStagingDNA(stagedBase64, mimeType) {
+  try {
+    const res = await fetch('/.netlify/functions/extract-staging-dna', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stagedBase64, mimeType: mimeType || 'image/jpeg' })
     });
-    if(res.ok){
-      const data=await res.json();
-      room.spatialAnalysis=data.analysis||null;
-    }
-  }catch(e){ console.log('Spatial analysis failed silently:', e.message); }
-  room.spatialStatus=room.spatialAnalysis?'done':null;
+    if (!res.ok) { console.warn('DNA extraction failed:', res.status); return null; }
+    const data = await res.json();
+    return data.dna || null;
+  } catch(e) { console.warn('DNA extraction error:', e.message); return null; }
 }
 
-async function stageRoom(roomId,iterNote){
-  const room=SESSION.rooms.find(r=>r.id===roomId);
-  const orig=SESSION.originals.find(o=>o.id===room.originalId);
-  if(!room||!orig)return;
-  // Run spatial analysis first (non-blocking if it fails)
-  if(!room.spatialAnalysis&&!iterNote){
-    await analyzeRoomSpatial(room,orig);
-  }
-  room.status='processing';renderRoomQueue();
-  try{
-    const b64=await callStageAPI(orig.base64,orig.mimeType,buildInteriorPrompt(room,iterNote,'low'),'low');
-    room.stagedBase64=b64;room.status='done';
-    room.approvedDNA=`${SESSION.intake.style_label} style, ${SESSION.intake.palette_label} palette, ${SESSION.intake.intensity_label} intensity, ${SESSION.intake.buyer_label} buyer, ${SESSION.intake.feeling_label} mood.`;
-    if(!SESSION.anchorRoomId){SESSION.anchorRoomId=room.id;showToast(`✓ ${room.roomName} set as Design Anchor.`,'success');}
-    else showToast(`✓ ${room.roomName} draft complete.`,'success');
-    await resizeToMatch(room,orig,null,'stagedBase64',b64);
+// ── Decor8 staging engine ─────────────────────────────────────────────────────
+async function stageRoom(roomId, iterNote) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  const orig = SESSION.originals.find(o => o.id === room.originalId);
+  if (!room || !orig) return;
+
+  const i = SESSION.intake;
+  const isIteration = !!(iterNote && room.stagedBase64);
+
+  // Source image: for iterations use staged image, for fresh use original
+  const sourceBase64 = isIteration ? room.stagedBase64 : orig.base64;
+  const sourceMime = isIteration ? 'image/jpeg' : orig.mimeType;
+
+  room.status = 'processing';
+  room.promptStatus = 'Generating staging prompt with Claude Vision...';
+  renderRoomQueue();
+
+  try {
+    // Step 1: Claude Vision generates hyper-detailed staging prompt
+    const promptRes = await fetch('/.netlify/functions/generate-staging-prompt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: sourceBase64,
+        mimeType: sourceMime,
+        roomName: room.roomName,
+        roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
+        designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
+        colorPalette: i.palette_label,
+        buyerProfile: i.buyer_label,
+        desiredFeeling: i.feeling_label,
+        stagingIntensity: i.intensity_label,
+        mlsMode: i.mls === 'A',
+        iterationNote: iterNote || null,
+        priorStagingDescription: isIteration ? room.approvedDNA : null,
+        shotFocus: room.shotFocus || null,
+        adjacentRooms: room.adjacentRooms,
+        dnaTier: getDNATier(room),
+        anchorDNA: (() => {
+          const tier = getDNATier(room);
+          if (!SESSION.stagingDNA) return null;
+          if (tier === 'full') return SESSION.stagingDNA.continuityPrompt || null;
+          if (tier === 'style') return `Match the overall style of this home: ${SESSION.stagingDNA.overallStyle}. Use the same wood tones (${SESSION.stagingDNA.woodTones || 'light oak'}), metal finishes (${SESSION.stagingDNA.metalFinishes || 'brushed nickel'}), and color palette (${Array.isArray(SESSION.stagingDNA.colorPalette)?SESSION.stagingDNA.colorPalette.join(', '):(SESSION.stagingDNA.colorPalette||'warm neutrals')}). Staging density: ${SESSION.stagingDNA.stagingDensity || 'moderate'}. Do NOT use the same furniture pieces — use appropriate furniture for this specific room type.`;
+          return null;
+        })(),
+        stagingDNA: getDNATier(room) === 'full' ? SESSION.stagingDNA : null,
+      })
+    });
+
+    if (!promptRes.ok) {
+      const d = await promptRes.json();
+      throw new Error('Prompt generation failed: ' + (d.error || 'unknown'));
+    }
+    const { prompt } = await promptRes.json();
+    room.lastPrompt = prompt;
+    room.promptStatus = 'Staging with Decor8...';
     renderRoomQueue();
-  }catch(err){room.status='error';renderRoomQueue();showToast('Error: '+err.message,'error');}
+
+    // Step 2: Call Decor8 with Claude's prompt
+    const decor8Res = await fetch('/.netlify/functions/stage-decor8', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: sourceBase64,
+        mimeType: sourceMime,
+        roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
+        designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
+        colorScheme: DECOR8_COLOR_SCHEME[i.palette_label] || 'COLOR_SCHEME_9',
+        customPrompt: prompt,
+      })
+    });
+
+    if (!decor8Res.ok) {
+      const d = await decor8Res.json();
+      throw new Error('Decor8 staging failed: ' + (d.error || 'unknown'));
+    }
+    const decor8Data = await decor8Res.json();
+    if (!decor8Data.stagedBase64) throw new Error('No staged image returned from Decor8');
+
+    room.stagedBase64 = decor8Data.stagedBase64;
+    room.status = 'done';
+    room.promptStatus = null;
+    room.approvedDNA = `${i.style_label} style, ${i.palette_label} palette, ${i.intensity_label} staging, ${i.buyer_label} buyer target, ${i.feeling_label} mood.`;
+
+    if (!SESSION.anchorRoomId) {
+      SESSION.anchorRoomId = room.id;
+    }
+
+    // If this is the Open Plan — extract Design DNA from the staged result
+    if (room.isOpenPlan && !SESSION.stagingDNA) {
+      room.dnaStatus = 'extracting';
+      renderRoomQueue();
+      showToast(`✓ ${room.roomName} staged — extracting Design DNA...`, 'success');
+      const dna = await extractStagingDNA(decor8Data.stagedBase64, 'image/jpeg');
+      if (dna) {
+        SESSION.stagingDNA = dna;
+        room.dnaStatus = 'done';
+        showToast(`✓ Design DNA locked — ${dna.overallStyle}`, 'success');
+      } else {
+        room.dnaStatus = 'failed';
+        showToast(`✓ ${room.roomName} staged. DNA extraction failed — rooms will use style defaults.`, 'success');
+      }
+    } else {
+      showToast(`✓ ${room.roomName} staged with Design DNA continuity.`, 'success');
+    }
+
+    await resizeToMatch(room, orig, null, 'stagedBase64', decor8Data.stagedBase64);
+    renderRoomQueue();
+
+  } catch (err) {
+    room.status = 'error';
+    room.promptStatus = null;
+    renderRoomQueue();
+    showToast('Staging error: ' + err.message, 'error');
+  }
 }
-function iterateRoom(roomId){
-  const note=document.getElementById('iter-'+roomId)?.value?.trim()||'';
-  if(!note){showToast('Enter revision instructions first.','error');return;}
-  const room=SESSION.rooms.find(r=>r.id===roomId);
-  if(room){room.status='pending';room.stagedBase64=null;room.finalBase64=null;room.finalStatus=null;stageRoom(roomId,note);}
+
+function iterateRoom(roomId) {
+  const note = document.getElementById('iter-' + roomId)?.value?.trim() || '';
+  if (!note) { showToast('Enter revision instructions first.', 'error'); return; }
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  if (room) {
+    // Keep stagedBase64 as the SOURCE for the iteration — do not clear it
+    room.status = 'pending';
+    room.finalBase64 = null;
+    room.finalStatus = null;
+    stageRoom(roomId, note);
+  }
 }
 function resetRoom(roomId){
   const room=SESSION.rooms.find(r=>r.id===roomId);
@@ -1099,13 +1395,19 @@ function resizeToMatch(room,orig,enhId,storeKey,incomingB64){
     const onLoad=()=>{
       loaded++;if(loaded<2)return;
       const oW=oI.naturalWidth,oH=oI.naturalHeight;
-      const canvas=document.createElement('canvas');canvas.width=oW;canvas.height=oH;
+      const sW=sI.naturalWidth,sH=sI.naturalHeight;
+      const canvas=document.createElement('canvas');
+      canvas.width=oW;canvas.height=oH;
       const ctx=canvas.getContext('2d');
-      const ratio=oW/oH,s=1024;
-      let sx,sy,sw,sh;
-      if(ratio>=1){sw=s;sh=Math.min(s,Math.round(s/ratio));sx=0;sy=Math.round((s-sh)/2);}
-      else{sh=s;sw=Math.min(s,Math.round(s*ratio));sx=Math.round((s-sw)/2);sy=0;}
-      ctx.drawImage(sI,sx,sy,sw,sh,0,0,oW,oH);
+      // Strategy: scale the staged image to fill the original dimensions
+      // Use cover-fit: scale so staged image covers the canvas, crop excess
+      const scaleX=oW/sW, scaleY=oH/sH;
+      const scale=Math.max(scaleX,scaleY); // cover
+      const scaledW=Math.round(sW*scale);
+      const scaledH=Math.round(sH*scale);
+      const offsetX=Math.round((oW-scaledW)/2);
+      const offsetY=Math.round((oH-scaledH)/2);
+      ctx.drawImage(sI,offsetX,offsetY,scaledW,scaledH);
       const newB64=canvas.toDataURL('image/jpeg',0.93).split(',')[1];
       if(storeKey==='__final__'){if(enhId){room.extSelections[enhId].finalBase64=newB64;room.extSelections[enhId].finalStatus='done';}else{room.finalBase64=newB64;room.finalStatus='done';}}
       else if(storeKey==='__extdraft__'){if(enhId)room.extSelections[enhId].base64=newB64;}
@@ -1113,7 +1415,10 @@ function resizeToMatch(room,orig,enhId,storeKey,incomingB64){
       resolve();
     };
     oI.onload=sI.onload=onLoad;
-    oI.src=orig.dataUrl;sI.src='data:image/png;base64,'+b64;
+    oI.src=orig.dataUrl;
+    // Handle both JPEG and PNG output from different engines
+    const mime=b64.charAt(0)==='/' ? 'image/jpeg' : b64.charAt(0)==='i' ? 'image/png' : 'image/jpeg';
+    sI.src=`data:${mime};base64,`+b64;
   });
 }
 

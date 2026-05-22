@@ -157,7 +157,7 @@ CRITICAL: rowStart/rowEnd are vertical (0=top, 1=bottom). colStart/colEnd are ho
 Be CONSERVATIVE — it is better to mask too little than too much. If unsure whether an area has a fixture above it, do NOT include it as a fill region.`;
 
   const payload = JSON.stringify({
-    model: "claude-opus-4-5-20251001",
+    model: "claude-opus-4-5",
     max_tokens: 1200,
     messages: [{
       role: "user",

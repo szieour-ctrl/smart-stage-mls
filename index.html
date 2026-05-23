@@ -158,6 +158,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 #toast.error{background:var(--danger);}
 #toast.success{background:var(--success);}
 #sbs-canvas{display:none;}
+/* ── Prompt Preview Modal ── */
+#prompt-modal{position:fixed;inset:0;background:rgba(10,8,6,0.92);z-index:9100;display:flex;align-items:center;justify-content:center;padding:20px;}
+#prompt-modal.hidden{display:none!important;}
+.pm-inner{background:#fff;border-radius:6px;overflow:hidden;max-width:780px;width:100%;max-height:92vh;display:flex;flex-direction:column;}
+.pm-header{background:var(--ink);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pm-title{font-family:'Cormorant Garamond',serif;color:var(--gold);font-size:1.15rem;font-weight:300;letter-spacing:0.06em;}
+.pm-badge{background:var(--gold);color:var(--ink);font-size:0.6rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:2px 8px;border-radius:2px;}
+.pm-body{padding:20px 24px;overflow-y:auto;flex:1;}
+.pm-room-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;}
+.pm-room-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--ink);margin-bottom:16px;}
+.pm-section-label{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;margin-bottom:6px;margin-top:14px;}
+.pm-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.pm-meta-chip{background:var(--cream);border:1px solid var(--border);border-radius:2px;font-size:0.72rem;padding:3px 9px;color:var(--ink);}
+.pm-prompt-wrap{position:relative;}
+.pm-prompt{width:100%;min-height:220px;border:1px solid var(--border);border-radius:3px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:0.82rem;color:var(--ink);background:var(--cream);resize:vertical;line-height:1.6;}
+.pm-prompt:focus{outline:none;border-color:var(--gold);}
+.pm-prompt-hint{font-size:0.72rem;color:var(--muted);margin-top:6px;line-height:1.5;}
+.pm-warning{background:#fff8e7;border:1px solid #f0d080;border-radius:3px;padding:10px 14px;font-size:0.76rem;color:#7a6000;margin-top:12px;line-height:1.5;}
+.pm-footer{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:14px 24px;border-top:1px solid var(--border);background:var(--cream);flex-shrink:0;}
+.pm-footer-left{font-size:0.72rem;color:var(--muted);}
+.pm-footer-right{display:flex;gap:8px;}
 .section-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;font-weight:500;}
 .fp-analyzing{display:flex;align-items:center;gap:10px;padding:14px 0;color:var(--muted);font-size:0.85rem;}
 .tier-label{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;padding:2px 6px;border-radius:2px;}
@@ -172,6 +193,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
   <div class="header-badge">SZREG Listing Tools</div>
 </header>
 <canvas id="sbs-canvas"></canvas>
+
+<!-- PROMPT PREVIEW MODAL -->
+<div id="prompt-modal" class="hidden">
+  <div class="pm-inner">
+    <div class="pm-header">
+      <div class="pm-title">Claude Vision — Staging Prompt Review</div>
+      <div class="pm-badge">Review Before Decor8</div>
+    </div>
+    <div class="pm-body">
+      <div class="pm-room-label">Room</div>
+      <div class="pm-room-name" id="pm-room-name">—</div>
+      <div class="pm-section-label">Session Parameters Sent to Claude</div>
+      <div class="pm-meta" id="pm-meta"></div>
+      <div class="pm-section-label">Claude Vision's Staging Prompt → Will Be Sent to Decor8</div>
+      <div class="pm-prompt-wrap">
+        <textarea class="pm-prompt" id="pm-prompt" rows="10" spellcheck="false"></textarea>
+      </div>
+      <div class="pm-prompt-hint">This is the exact text Claude Vision generated from reading your photo. Edit directly if you see placement errors — your edits go to Decor8, not Claude's version. Every word here influences what Decor8 places and where.</div>
+      <div class="pm-warning" id="pm-open-plan-warning" style="display:none;">⚠ <strong>Open Plan detected.</strong> Claude Vision read this as a multi-zone space. Watch for zone crowding — if the prompt places dining furniture AND living furniture in the same area, delete the placement instructions and keep only style/material descriptions. Decor8's native openplan logic handles zone separation better than text instructions.</div>
+    </div>
+    <div class="pm-footer">
+      <div class="pm-footer-left" id="pm-cost-note">Approving sends to Decor8 · ~$0.20 · ~45 seconds</div>
+      <div class="pm-footer-right">
+        <button class="btn btn-ghost" onclick="cancelPromptModal()">✕ Cancel — Don't Stage</button>
+        <button class="btn btn-outline" onclick="clearPromptAndStage()" title="Send to Decor8 with NO custom prompt — use Decor8 native intelligence only">Stage Without Prompt</button>
+        <button class="btn btn-primary" onclick="approvePromptAndStage()">Approve → Stage It</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- LIGHTBOX -->
 <div id="lightbox" class="hidden">
@@ -1252,8 +1303,18 @@ async function stageRoom(roomId, iterNote) {
     }
     const { prompt } = await promptRes.json();
     room.lastPrompt = prompt;
-    room.promptStatus = 'Staging with Decor8...';
-    renderRoomQueue();
+
+    // ── PROMPT PREVIEW MODAL — pause here, wait for user approval ────────────
+    const approvedPrompt = await showPromptModal(room, prompt);
+    if (approvedPrompt === null) {
+      // User cancelled — reset room to pending, no Decor8 credit burned
+      room.status = 'pending';
+      room.promptStatus = null;
+      renderRoomQueue();
+      showToast('Staging cancelled — no Decor8 credit used.', '');
+      return;
+    }
+    const finalPrompt = approvedPrompt; // may be edited text or '' for no-prompt mode
 
     // Step 2: Call Decor8 — auto-retry up to 3x on timeout
     room.promptStatus = 'Staging with Decor8 — takes ~45 seconds...';
@@ -1274,7 +1335,7 @@ async function stageRoom(roomId, iterNote) {
             roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
             designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
             colorScheme: DECOR8_COLOR_SCHEME[i.palette_label] || 'COLOR_SCHEME_9',
-            customPrompt: prompt,
+            customPrompt: finalPrompt || undefined,
           })
         });
         clearTimeout(timer);
@@ -1484,6 +1545,65 @@ function downloadSideBySide(roomId,enhId,tier){
   oI.onload=sI.onload=go;oI.src=orig.dataUrl;sI.src='data:image/jpeg;base64,'+b64;
 }
 function triggerDownload(dataUrl,filename){const a=document.createElement('a');a.href=dataUrl;a.download=filename;a.click();}
+
+// ══════════════════════════════════════════
+// PROMPT PREVIEW MODAL
+// ══════════════════════════════════════════
+let _promptModalResolve = null;
+
+function showPromptModal(room, prompt) {
+  return new Promise((resolve) => {
+    _promptModalResolve = resolve;
+    const i = SESSION.intake;
+
+    // Room name + meta chips
+    document.getElementById('pm-room-name').textContent = room.roomName;
+    const meta = [
+      { label: 'Style', val: i.style_label },
+      { label: 'Palette', val: i.palette_label },
+      { label: 'Buyer', val: i.buyer_label },
+      { label: 'Feeling', val: i.feeling_label },
+      { label: 'Intensity', val: i.intensity_label },
+      { label: 'Decor8 Room Type', val: getDecor8RoomType(room.roomName, room.adjacentRooms) },
+      { label: 'DNA Tier', val: getDNATier(room) === 'none' ? '—' : getDNATier(room) },
+    ];
+    document.getElementById('pm-meta').innerHTML = meta
+      .map(m => `<div class="pm-meta-chip"><strong>${m.label}:</strong> ${m.val || '—'}</div>`)
+      .join('');
+
+    // Prompt textarea
+    document.getElementById('pm-prompt').value = prompt;
+
+    // Open Plan warning
+    const warn = document.getElementById('pm-open-plan-warning');
+    warn.style.display = room.isOpenPlan ? 'block' : 'none';
+
+    // Cost note — show DNA context if applicable
+    const tier = getDNATier(room);
+    const dnaNote = tier === 'full' ? ' · Full DNA injected' : tier === 'style' ? ' · Style DNA injected' : '';
+    document.getElementById('pm-cost-note').textContent =
+      `Approving sends to Decor8 · ~$0.20 · ~45 sec${dnaNote}`;
+
+    document.getElementById('prompt-modal').classList.remove('hidden');
+  });
+}
+
+function approvePromptAndStage() {
+  const edited = document.getElementById('pm-prompt').value.trim();
+  document.getElementById('prompt-modal').classList.add('hidden');
+  if (_promptModalResolve) { _promptModalResolve(edited || ''); _promptModalResolve = null; }
+}
+
+function clearPromptAndStage() {
+  document.getElementById('prompt-modal').classList.add('hidden');
+  if (_promptModalResolve) { _promptModalResolve(''); _promptModalResolve = null; }
+  showToast('Staging with no custom prompt — Decor8 native intelligence only.', '');
+}
+
+function cancelPromptModal() {
+  document.getElementById('prompt-modal').classList.add('hidden');
+  if (_promptModalResolve) { _promptModalResolve(null); _promptModalResolve = null; }
+}
 
 // ══════════════════════════════════════════
 // UTILS

@@ -1197,26 +1197,6 @@ async function extractStagingDNA(stagedBase64, mimeType) {
   } catch(e) { console.warn('DNA extraction error:', e.message); return null; }
 }
 
-// ── Poll Decor8 job result ───────────────────────────────────────────────────
-async function pollDecor8Result(jobId, maxWaitMs = 180000) {
-  const start = Date.now();
-  while (Date.now() - start < maxWaitMs) {
-    await new Promise(r => setTimeout(r, 4000)); // poll every 4 seconds
-    try {
-      const res = await fetch(`/.netlify/functions/check-decor8?jobId=${jobId}`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data.status === 'done') return data;
-      if (data.status === 'error') throw new Error('Decor8 error: ' + (data.error || 'unknown'));
-      // status === 'pending' — keep polling
-    } catch(err) {
-      if (err.message.startsWith('Decor8 error:')) throw err;
-      console.warn('Poll error:', err.message);
-    }
-  }
-  throw new Error('Staging timed out after 3 minutes — please try again');
-}
-
 // ── Decor8 staging engine ─────────────────────────────────────────────────────
 async function stageRoom(roomId, iterNote) {
   const room = SESSION.rooms.find(r => r.id === roomId);
@@ -1275,32 +1255,50 @@ async function stageRoom(roomId, iterNote) {
     room.promptStatus = 'Staging with Decor8...';
     renderRoomQueue();
 
-    // Step 2: Launch Decor8 background job — returns jobId immediately
-    const decor8Res = await fetch('/.netlify/functions/stage-decor8', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        imageBase64: sourceBase64,
-        mimeType: sourceMime,
-        roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
-        designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
-        colorScheme: DECOR8_COLOR_SCHEME[i.palette_label] || 'COLOR_SCHEME_9',
-        customPrompt: prompt,
-      })
-    });
-
-    if (!decor8Res.ok) {
-      const d = await decor8Res.json();
-      throw new Error('Decor8 launch failed: ' + (d.error || 'unknown'));
-    }
-    const { jobId } = await decor8Res.json();
-    if (!jobId) throw new Error('No job ID returned');
-
-    // Step 3: Poll for result
-    room.promptStatus = 'Decor8 staging in progress (~45 seconds)...';
+    // Step 2: Call Decor8 — auto-retry up to 3x on timeout
+    room.promptStatus = 'Staging with Decor8 — takes ~45 seconds...';
     renderRoomQueue();
-    const decor8Data = await pollDecor8Result(jobId);
-    if (!decor8Data.stagedBase64) throw new Error('No staged image in result');
+
+    let decor8Data = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 80000); // 80s client timeout
+        const decor8Res = await fetch('/.netlify/functions/stage-decor8', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            imageBase64: sourceBase64,
+            mimeType: sourceMime,
+            roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
+            designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
+            colorScheme: DECOR8_COLOR_SCHEME[i.palette_label] || 'COLOR_SCHEME_9',
+            customPrompt: prompt,
+          })
+        });
+        clearTimeout(timer);
+        if (!decor8Res.ok) {
+          const d = await decor8Res.json().catch(() => ({}));
+          if (attempt < 3) { room.promptStatus = `Retrying Decor8 (attempt ${attempt+1}/3)...`; renderRoomQueue(); continue; }
+          throw new Error('Decor8 staging failed: ' + (d.error || decor8Res.status));
+        }
+        decor8Data = await decor8Res.json();
+        if (!decor8Data.stagedBase64) {
+          if (attempt < 3) { room.promptStatus = `Retrying (attempt ${attempt+1}/3)...`; renderRoomQueue(); continue; }
+          throw new Error('No staged image returned');
+        }
+        break; // success
+      } catch(err) {
+        if (err.name === 'AbortError' && attempt < 3) {
+          room.promptStatus = `Decor8 timeout — retrying (${attempt+1}/3)...`;
+          renderRoomQueue();
+          continue;
+        }
+        throw err;
+      }
+    }
+    if (!decor8Data?.stagedBase64) throw new Error('Decor8 staging failed after 3 attempts');
 
     room.stagedBase64 = decor8Data.stagedBase64;
     room.status = 'done';

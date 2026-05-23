@@ -43,27 +43,41 @@ exports.handler = async (event) => {
     // ── Build the consultant prompt ───────────────────────────────────────────
     const isIteration = !!(iterationNote && priorStagingDescription);
 
-    const systemPrompt = `You are an expert real estate staging consultant and interior designer specializing in luxury residential staging for the Sacramento, CA active adult 55+ market. You generate hyper-detailed staging prompts for AI virtual staging APIs.
+    const systemPrompt = `You are an expert real estate staging consultant generating virtual staging prompts for MLS listing photography. This tool is used exclusively for MetroList MLS listings — not a design or remodel tool.
 
-Your prompts must be:
-- Architecturally precise — based on what you actually see in the photo
-- Spatially accurate — furniture placed where it physically fits given camera angle and room geometry  
-- Style-consistent — matching the specified design style exactly
-- MLS-compliant — photorealistic, not fantasy
-- Buyer-psychology driven — emotionally resonant for the target buyer
+MLS PRESERVE LAW — ABSOLUTE — OVERRIDES EVERYTHING ELSE:
+Every prompt you generate MUST begin with a PRESERVE EXACTLY block listing every permanent element visible in the photo. These elements MUST NOT change under any circumstances:
+- Cabinetry: color, style, hardware, layout — EXACTLY as photographed
+- Countertops: material, color, edge profile — EXACTLY as photographed
+- Flooring: material, color, pattern — EXACTLY as photographed
+- Walls and paint color — EXACTLY as photographed
+- Fixtures: faucets, plumbing, lighting already installed — EXACTLY as photographed
+- Mirrors and framed elements already installed — EXACTLY as photographed
+- Appliances — EXACTLY as photographed
+- Fireplace surround and mantel — EXACTLY as photographed
+- Windows, doors, casings, trim — EXACTLY as photographed
+- Tile: backsplash, shower, floor — EXACTLY as photographed
+- Island geometry and base color — EXACTLY as photographed
+- House exterior color and materials — EXACTLY as photographed
 
-PROPS STANDARDS (always enforce):
-- Countertops: maximum one tray OR bowl, one vase, one plant per surface section
-- Wall art: one piece per wall, sized 50-75% of wall or furniture width below it
-- Area rugs: one per seating area, correctly sized so front legs of all seating sit on rug
-- Plants: maximum one per room
-- General: less is more — every item must earn its place`;
+The AI staging engine may ONLY add furniture, rugs, art, and soft accessories into empty space. It may NOT remodel, replace, recolor, or alter any existing permanent element. Always write PRESERVE EXACTLY first in every prompt before any styling instruction.
+
+STAGING SCOPE — ADDITIONS INTO EMPTY SPACE ONLY:
+Furniture, area rugs, wall art, minimal accessories, soft goods (pillows, throws, towels, bath mats).
+
+PROPS STANDARDS:
+- Countertops: max one tray or bowl, one vase, one plant per surface section
+- Wall art: one piece per wall, sized 50-75% of furniture width below it
+- Area rugs: one per seating area, front legs of all seating on rug
+- Plants: maximum one per room. Less is more — every item must earn its place`;
 
     let userPrompt;
 
     if (isIteration) {
       // ── ITERATION MODE ────────────────────────────────────────────────────
-      userPrompt = `You are revising a virtual staging result. The current staged image has been provided along with the original vacant room.
+      userPrompt = `You are revising a virtual staging result for an MLS listing photo.
+
+MLS PRESERVE LAW — MANDATORY: Begin your prompt with PRESERVE EXACTLY, listing every permanent element visible in the original photo (cabinetry color/style, countertops, flooring, walls, fixtures, tile, appliances, mirrors, windows, trim). These MUST NOT change. Only furniture, rugs, art, and soft accessories may be added or adjusted.
 
 CURRENT STAGING: ${priorStagingDescription}
 
@@ -73,15 +87,17 @@ ROOM: ${roomName} | STYLE: ${designStyle} | PALETTE: ${colorPalette} | BUYER: ${
 ${anchorDNA ? `DESIGN CONTINUITY (match this): ${anchorDNA}` : ''}
 
 Analyze both images carefully. Generate a revised staging prompt that:
-1. Keeps EVERYTHING from the current staging EXCEPT what the revision requests
-2. Makes ONLY the specific changes requested
-3. Preserves all architectural elements exactly
+1. Opens with PRESERVE EXACTLY — every permanent architectural element in the original photo
+2. Keeps EVERYTHING from the current staging EXCEPT what the revision requests
+3. Makes ONLY the specific changes requested — nothing else moves
 
 Return ONLY the prompt text — no explanation, no JSON, no markdown. Just the staging prompt.`;
 
     } else {
       // ── FRESH STAGING MODE ────────────────────────────────────────────────
-      userPrompt = `Analyze this vacant real estate listing photo and generate a hyper-detailed virtual staging prompt.
+      userPrompt = `Analyze this vacant real estate listing photo and generate a virtual staging prompt for an MLS listing.
+
+MANDATORY: Your prompt MUST open with a PRESERVE EXACTLY block. Scan the photo carefully and list every permanent element you see — cabinetry (exact color and style), countertop material and color, flooring, wall color, all installed fixtures, tile, appliances, mirrors, windows, trim, fireplace, island geometry, exterior materials. Every item in PRESERVE EXACTLY tells the staging engine it cannot touch that element. This protects the listing from MLS compliance violations.
 
 SESSION PARAMETERS:
 - Room: ${roomName} (Decor8 room type: ${roomType})

@@ -29,6 +29,13 @@
 [functions."serve-image"]
   timeout = 10
 
+
+[functions."stage-decor8-background"]
+  timeout = 26
+
+[functions."check-decor8"]
+  timeout = 10
+
 [[headers]]
   for = "/*"
   [headers.values]

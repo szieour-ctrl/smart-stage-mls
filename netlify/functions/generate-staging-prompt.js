@@ -108,6 +108,42 @@ ${anchorDNA}
 Do NOT replicate the living/dining furniture. Use appropriate furniture for this room type.
 MATCH ONLY: wood tones, metal finishes, color palette, accessory density and restraint.` : ''}
 
+${openPlanZones ? `
+OPEN PLAN STAGING — GUARDRAILS + STYLE ONLY
+
+This is an open plan space staged with Decor8's native openplan room type. Decor8 controls zone placement automatically — do NOT write placement coordinates or tell it where to put furniture zones. Your job is guardrails and style only.
+
+ANALYZE THE PHOTO AND IDENTIFY ONLY:
+1. Which permanent fixtures are in the frame that must NOT be moved or removed
+2. Which side of the island faces the camera (near) vs away from camera (far/back)
+3. What the design style, materials, and palette should look like
+
+GENERATE A PROMPT WITH THREE SECTIONS ONLY:
+
+SECTION 1 — PRESERVE (non-negotiable):
+List every permanent fixture that must remain exactly as photographed. Be specific: island geometry, cabinetry, appliances, fireplace, flooring, windows, pendants, ceiling fans. If the kitchen island is visible — state explicitly: DO NOT remove or relocate the kitchen island.
+
+SECTION 2 — NEGATIVE CONSTRAINTS (what Decor8 must NOT do):
+Based on what you see in the photo, write explicit prohibitions:
+- If island is in frame: "Do NOT remove or relocate the kitchen island"
+- If bar stools should appear: "Bar stools on far side of island only — NOT on camera-facing side"
+- If dining table would crowd visible space: "Do NOT place dining table in the foreground floor area"
+- If great room zone is background: "Do NOT over-furnish the great room background — one sofa grouping only"
+Write only the prohibitions that are relevant to THIS specific photo.
+
+SECTION 3 — STYLE + MATERIALS:
+Describe exactly what the furniture should look like within Decor8's available inventory:
+- Sofa: fabric, color, profile, leg style
+- Bar stools if applicable: seat material, frame material, height
+- Coffee table: material, shape
+- Dining set if applicable: table material/shape, chair style
+- Area rug: texture, color, pattern
+- Art: style, colors, approximate size
+- Props: maximum 2-3 items total, describe each specifically
+- Color palette: 3-4 specific colors that must dominate
+- What NOT to add: list specific items that would clash with the home's palette or style
+
+Return ONLY the prompt text in these three sections. No explanation, no preamble.` : `
 ANALYZE THE PHOTO AND IDENTIFY:
 1. Camera position and direction
 2. Room focal point (fireplace, view, feature wall)
@@ -117,20 +153,9 @@ ANALYZE THE PHOTO AND IDENTIFY:
 6. Visible adjacent spaces that need appropriate (not overstaged) treatment
 7. Natural light direction and quality
 
-${openPlanZones ? `THIS IS AN OPEN PLAN SPACE. You MUST stage ALL zones:
-${openPlanZones}
-
-CRITICAL OPEN PLAN RULES:
-- Identify which ceiling fixture corresponds to each zone
-- Dining table ALWAYS goes under the dining chandelier/pendant
-- Sofa ALWAYS faces the fireplace or feature wall — never placed in dining zone
-- Kitchen bar seating ALWAYS on far side of island (away from camera)
-- Each zone must be fully staged — do not leave any zone empty` : ''}
-
 GENERATE A STAGING PROMPT that specifies:
 - Exact furniture pieces and their precise placement locations
 - Which side of islands/peninsulas bar seating goes (always far side from camera)
-- Dining table position relative to overhead fixtures
 - Sofa orientation relative to focal point
 - Area rug sizing and position
 - Art placement with size guidance
@@ -138,7 +163,7 @@ GENERATE A STAGING PROMPT that specifies:
 - What to preserve exactly
 - What adjacent visible spaces should look like (understaged background)
 
-The prompt must be detailed enough that the AI staging engine knows exactly where every piece goes.
+The prompt must be detailed enough that the AI staging engine knows exactly where every piece goes.`}
 
 Return ONLY the staging prompt text — no explanation, no JSON, no preamble. Start directly with the staging description.`;
     }

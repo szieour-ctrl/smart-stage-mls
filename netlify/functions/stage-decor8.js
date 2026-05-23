@@ -19,31 +19,50 @@ function httpsRequest(options, body) {
   });
 }
 
-// ── Upload image via serve-image proxy to get a public URL ───────────────────
-// serve-image.js stores in Netlify Blobs (with auth) and serves via public endpoint
+// ── Upload image to ImgBB via multipart form ─────────────────────────────────
 async function getImageUrl(imageBase64, mimeType) {
-  const siteUrl = process.env.URL || "https://smart-stage-ai.netlify.app";
-  const proxyUrl = `${siteUrl}/.netlify/functions/serve-image`;
+  const apiKey = process.env.IMGBB_API_KEY;
+  if (!apiKey) throw new Error("IMGBB_API_KEY not configured");
 
-  const payload = JSON.stringify({ imageBase64, mimeType: mimeType || "image/jpeg" });
+  const imageBuffer = Buffer.from(imageBase64, "base64");
+  const boundary = "----ImgBBBoundary" + Math.random().toString(36).slice(2);
+  const ext = (mimeType || "image/jpeg").includes("png") ? "png" : "jpg";
+
+  // Build multipart — send raw binary (faster than base64 re-encoding)
+  const partHeader = Buffer.from(
+    `--${boundary}
+Content-Disposition: form-data; name="image"; filename="room.${ext}"
+Content-Type: ${mimeType || "image/jpeg"}
+
+`,
+    "utf8"
+  );
+  const partFooter = Buffer.from(`
+--${boundary}--
+`, "utf8");
+  const body = Buffer.concat([partHeader, imageBuffer, partFooter]);
+
+  console.log(`Uploading to ImgBB: ${Math.round(body.length/1024)}KB`);
 
   const result = await httpsRequest({
-    hostname: new URL(proxyUrl).hostname,
-    path: "/.netlify/functions/serve-image",
+    hostname: "api.imgbb.com",
+    path: `/1/upload?key=${apiKey}&expiration=3600`,
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "Content-Length": Buffer.byteLength(payload),
+      "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      "Content-Length": body.length,
     }
-  }, payload);
+  }, body);
 
+  console.log("ImgBB status:", result.status);
   if (result.status !== 200) {
-    throw new Error(`serve-image proxy failed: ${result.status} ${JSON.stringify(result.body).slice(0,200)}`);
+    throw new Error(`ImgBB upload failed: ${result.status} ${JSON.stringify(result.body).slice(0, 200)}`);
   }
 
-  const { url, key } = result.body;
-  if (!url) throw new Error("No public URL returned from serve-image proxy");
-  return { url, key };
+  const url = result.body?.data?.url;
+  if (!url) throw new Error("No URL from ImgBB: " + JSON.stringify(result.body).slice(0, 200));
+  console.log("ImgBB URL:", url);
+  return { url, key: result.body?.data?.id };
 }
 
 // ── Call Decor8 staging API ───────────────────────────────────────────────────

@@ -426,11 +426,10 @@ function getDNATier(room) {
   return 'style'; // default to style for anything else
 }
 
-function getDecor8RoomType(roomName, adjacentRooms) {
-  // If this room connects to other main living spaces, use openplan
-  const isOpen = OPENPLAN_ROOMS.includes(roomName) &&
-    adjacentRooms?.some(r => OPENPLAN_ROOMS.includes(r));
-  if (isOpen) return "openplan";
+function getDecor8RoomType(roomName, adjacentRooms, decor8Type) {
+  // Trust the explicit dropdown selection first — user knows what's in the frame
+  // Only use openplan when the dropdown was explicitly set to an Open Plan label
+  if (decor8Type) return decor8Type;
   return DECOR8_ROOM_TYPE[roomName] || "livingroom";
 }
 
@@ -1274,7 +1273,7 @@ async function stageRoom(roomId, iterNote) {
         imageBase64: sourceBase64,
         mimeType: sourceMime,
         roomName: room.roomName,
-        roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
+        roomType: getDecor8RoomType(room.roomName, room.adjacentRooms, room.decor8Type),
         designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
         colorPalette: i.palette_label,
         buyerProfile: i.buyer_label,
@@ -1332,7 +1331,7 @@ async function stageRoom(roomId, iterNote) {
           body: JSON.stringify({
             imageBase64: sourceBase64,
             mimeType: sourceMime,
-            roomType: getDecor8RoomType(room.roomName, room.adjacentRooms),
+            roomType: getDecor8RoomType(room.roomName, room.adjacentRooms, room.decor8Type),
             designStyle: DECOR8_DESIGN_STYLE[i.style_label] || 'transitional',
             colorScheme: DECOR8_COLOR_SCHEME[i.palette_label] || 'COLOR_SCHEME_9',
             customPrompt: finalPrompt || undefined,
@@ -1564,7 +1563,7 @@ function showPromptModal(room, prompt) {
       { label: 'Buyer', val: i.buyer_label },
       { label: 'Feeling', val: i.feeling_label },
       { label: 'Intensity', val: i.intensity_label },
-      { label: 'Decor8 Room Type', val: getDecor8RoomType(room.roomName, room.adjacentRooms) },
+      { label: 'Decor8 Room Type', val: getDecor8RoomType(room.roomName, room.adjacentRooms, room.decor8Type) },
       { label: 'DNA Tier', val: getDNATier(room) === 'none' ? '—' : getDNATier(room) },
     ];
     document.getElementById('pm-meta').innerHTML = meta

@@ -126,39 +126,48 @@ MATCH ONLY: wood tones, metal finishes, color palette, accessory density and res
 
 ${openPlanZones ? `
 OPEN PLAN PROMPT — CRITICAL API BEHAVIOR:
-When a custom prompt is sent to Decor8, room_type, design_style, color_scheme, and speciality_decor are ALL IGNORED. Your prompt must be fully self-contained — it must declare this is an open plan space, carry the style, palette, and furniture descriptions entirely within the prompt text.
+When a custom prompt is sent to Decor8, room_type/design_style/color_scheme are ALL IGNORED. Your prompt must be fully self-contained. It must open by declaring this is an open-concept space and carry style + palette entirely in the prompt text.
 
 ANALYZE THE PHOTO AND IDENTIFY:
-1. Every permanent fixture visible — list each specifically for the PRESERVE block
-2. Which side of the island faces the camera (near) vs away (far) — if island is present
-3. What open floor zones are available for furniture placement
+1. Every permanent fixture — for the PRESERVE block
+2. Which overhead fixture anchors each zone (fireplace wall = living zone, chandelier = dining zone)
+3. Whether a kitchen island is visible and which side faces the camera
 
-GENERATE A SELF-CONTAINED OPEN PLAN STAGING PROMPT structured exactly as follows:
+GENERATE A SELF-CONTAINED OPEN PLAN STAGING PROMPT using this exact structure:
 
-OPENING LINE (required):
-Start with: "Virtually stage this open plan [describe the two zones you see — e.g. living and dining area, or kitchen and living area] in [${designStyle}] style with [${colorPalette}] palette."
+PART 1 — OPENING (required):
+"Open-concept [list the zones you see — e.g. living, dining, and kitchen] space in ${designStyle} style. Preserve all original architecture, room dimensions, wall placement, windows, cabinetry, appliances, ceiling height, flooring layout, and camera perspective. Create cohesive ${designStyle} staging with ${colorPalette} tones throughout the connected space."
 
-PRESERVE EXACTLY (required, list every item):
-Every permanent architectural element visible in this photo. Be specific about colors and materials. If kitchen island is visible write: "DO NOT remove or relocate the kitchen island." List cabinetry color, countertop material, flooring, fireplace surround, ceiling fixtures, windows, appliances, tile — everything that exists in the original photo.
+PART 2 — PRESERVE EXACTLY (required):
+List every permanent architectural element visible. Be specific about colors and materials. Always include: cabinetry color/style, countertop material, flooring, fireplace surround, ceiling fixtures (chandelier, pendants, ceiling fan), windows, appliances, island geometry. If island is visible add: "DO NOT remove or relocate the kitchen island."
 
-FURNITURE — describe each piece by what it looks like, NOT where to put it:
-Decor8's openplan spatial model handles zone placement. Your job is describing materials and style only:
-- Sofa: fabric type, color, profile, leg style — NO placement instructions
-- Dining table: material, shape, finish — NO placement instructions  
-- Dining chairs: style, material, seat — NO placement instructions
-- Bar stools (if island visible): seat material, frame material — specify "far side of island only, NOT camera-facing side"
-- Coffee table: material, shape, finish
-- Area rug: texture, weave, color, approximate size
-- Art: style description, dominant colors — NO wall placement instructions
-- Plants: type, pot style — maximum one
+PART 3 — ZONE DEFINITIONS using rug anchors (NO furniture descriptions — let Decor8 pick from its native library):
+For each zone you identify in the photo, write ONE zone block. Use only the fixture references you can actually see:
 
-PALETTE:
-List 3-4 specific colors that must dominate. List 2-3 specific items that must NOT appear (e.g. "no dark stained wood, no traditional patterns, no table lamps").
+Living zone (if fireplace visible):
+"Define the living room seating area at the fireplace wall using a large natural fiber area rug positioned approximately 1 foot from the fireplace wall. Place a seating grouping centered on the rug facing the fireplace. Maintain realistic circulation around all furniture."
 
-ATMOSPHERE:
-One sentence: lighting quality, mood, photorealism standard for MLS photography.
+Dining zone (if chandelier visible):
+"Define the dining area using a large woven area rug centered beneath the hanging chandelier. Place a dining table with chairs centered on the rug with proper spacing and natural traffic flow."
 
-Return ONLY the prompt text — no section headers, no explanation, no preamble. Write it as a single flowing staging instruction that Decor8 receives directly.` : `
+Kitchen zone (if island visible):
+"Add counter stools on the far side of the island only — NOT the camera-facing side. Minimal countertop styling only — one small plant or bowl, nothing more."
+
+ONLY write zone blocks for zones you can actually see in the photo. Do not invent zones.
+
+${anchorDNA && dnaTier === 'full' ? `PART 3B — DNA CONTINUITY (second open plan angle — same home):
+This is a second angle of the same home. The anchor staging established these choices — match them:
+${anchorDNA}
+Reference these specific pieces in your zone definitions so Decor8 matches the established look.` : ''}
+
+PART 4 — NEGATIVE PROMPT (required, always last):
+"Do not alter walls, windows, cabinetry, flooring, ceiling, fireplace, lighting fixtures, appliances, room proportions, or camera perspective. ${
+  stagingDNA?.colorPalette ? 
+  `Palette must stay within: ${Array.isArray(stagingDNA.colorPalette) ? stagingDNA.colorPalette.join(', ') : stagingDNA.colorPalette}.` : 
+  `Avoid dark stained wood, cognac leather, black metal furniture frames, traditional rug patterns, table lamps.`
+} Avoid clutter, oversized decor, floating furniture, warped rugs, duplicate objects, or fantasy lighting."
+
+Return ONLY the prompt text — no section headers in your output, no explanation, no preamble. Write it as flowing paragraphs that Decor8 receives directly.` : `
 ANALYZE THE PHOTO AND IDENTIFY:
 1. Camera position and direction
 2. Room focal point (fireplace, view, feature wall)

@@ -90,9 +90,9 @@ Do not alter architecture, room dimensions, cabinetry, flooring layout, windows,
 
 Open-concept great room with connected kitchen, dining, and living spaces. Create cohesive ${style} staging throughout the entire shared space using ${wood}, ${metals}, and a ${palette} palette.
 
-Define the primary ${primaryZone} area around the ${living.anchor} using a large ${living.boundary} and proportional seating group.
+Define the living area around the ${living.anchor} using a large ${living.boundary} and proportional seating group.
 
-Define the ${secondaryZone} zone around the ${dining.anchor} using a large ${dining.boundary} with a moderate-density dining arrangement.
+Define the dining area around the ${dining.anchor} using a large ${dining.boundary} with a moderate-density dining arrangement.
 
 Kitchen styling should remain light and minimal with proportional counter stools on the far side of the island only.
 

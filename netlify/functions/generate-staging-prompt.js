@@ -26,15 +26,40 @@ function buildOpenPlanPrompt({ preserveList, designStyle, colorPalette, designDN
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
 
-  const living  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'living')  || { anchor: 'fireplace',   boundary: 'rectangular rug' };
-  const dining  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'dining')  || { anchor: 'chandelier',  boundary: 'oval rug' };
-  const kitchen = spatialDNA?.zoneRelationships?.find(z => z.zone === 'kitchen') || { anchor: 'island',      boundary: null };
+  // Find zones with safe defaults — never allow 'none' for living/dining boundary
+  const rawLiving  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'living');
+  const rawDining  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'dining');
+  const rawKitchen = spatialDNA?.zoneRelationships?.find(z => z.zone === 'kitchen');
+
+  const living = {
+    anchor:   rawLiving?.anchor   || 'fireplace',
+    boundary: (rawLiving?.boundary && rawLiving.boundary !== 'none') ? rawLiving.boundary : 'rectangular rug',
+  };
+  const dining = {
+    anchor:   rawDining?.anchor   || 'chandelier',
+    boundary: (rawDining?.boundary && rawDining.boundary !== 'none') ? rawDining.boundary : 'oval rug',
+  };
+  const kitchen = {
+    anchor:   rawKitchen?.anchor  || 'island',
+    boundary: null,
+  };
 
   const primaryZone   = spatialDNA?.primaryZone   || 'living';
   const secondaryZone = spatialDNA?.secondaryZone  || 'dining';
 
   // Style/palette from DNA if available, otherwise from session intake
-  const style   = designDNA?.overallStyle || designStyle || 'Organic Modern';
+  // Convert Decor8 enum strings to readable names for prompt injection
+  const STYLE_LABELS = {
+    'organicmodern':'Organic Modern','transitional':'Transitional','contemporary':'Contemporary',
+    'modern':'Modern','scandinavian':'Scandinavian','minimalist':'Minimalist',
+    'coastal':'Coastal','farmhouse':'Farmhouse','midcenturymodern':'Mid-Century Modern',
+    'industrial':'Industrial','bohemian':'Bohemian','traditional':'Traditional',
+    'japandi':'Japandi','warmminimalist':'Warm Minimalist','luxemodern':'Luxe Modern',
+    'artdeco':'Art Deco','mediterranean':'Mediterranean','rustic':'Rustic',
+    'grandmillennial':'Grand Millennial','wabi_sabi':'Wabi Sabi',
+  };
+  const rawStyle = designDNA?.overallStyle || designStyle || 'Organic Modern';
+  const style = STYLE_LABELS[rawStyle?.toLowerCase().replace(/[^a-z]/g,'')] || rawStyle;
   const palette = designDNA?.colorPalette
     ? (Array.isArray(designDNA.colorPalette) ? designDNA.colorPalette.join(', ') : designDNA.colorPalette)
     : colorPalette || 'warm neutrals';

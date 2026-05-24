@@ -125,52 +125,39 @@ Do NOT replicate the living/dining furniture. Use appropriate furniture for this
 MATCH ONLY: wood tones, metal finishes, color palette, accessory density and restraint.` : ''}
 
 ${openPlanZones ? `
-OPEN PLAN PROMPT — ALL 10 RULES MUST BE FOLLOWED:
+OPEN PLAN — TEMPLATE FILL MODE.
+Your ONLY job is to scan the photo and fill in the [BLANKS] below. Do not rewrite, paraphrase, or restructure anything outside the blanks. Output the completed template exactly as written — every word outside brackets is locked and must appear verbatim in your output.
 
-IMPORTANT API BEHAVIOR: When a custom prompt is sent to Decor8, room_type/design_style/color_scheme are stripped from the request. Your prompt must be fully self-contained and carry ALL information Decor8 needs.
+SCAN THE PHOTO NOW AND IDENTIFY:
+1. Every permanent fixture — exact colors and materials for the PRESERVE list
+2. Which zones are visible: fireplace? chandelier? kitchen island?
+3. Which side of the island faces the camera (near = camera side = NO stools, far = away from camera = stool side)
 
-STEP 1 — SCAN THE PHOTO AND IDENTIFY:
-- Every permanent architectural fixture (for PRESERVE block)
-- Which anchor fixtures are visible: fireplace? chandelier? kitchen island? ceiling fan? windows?
-- Which zones are present based ONLY on what you can see
-- Which side of the island faces the camera (near) vs away (far)
+NOW OUTPUT THIS COMPLETED TEMPLATE — fill every [BLANK], output everything else verbatim:
 
-STEP 2 — GENERATE THE PROMPT in this exact order. Do not reorder. Do not skip sections.
+PRESERVE EXACTLY: [BLANK: list every permanent element you see — exact color and material for each: cabinetry color/style, countertop material, flooring material/color, fireplace surround color/material, ALL ceiling fixtures by location (chandelier, pendants, ceiling fan), windows, appliances, island geometry and base color, tile, hardware, all doors and trim. End this list with "DO NOT remove or relocate the kitchen island." if island is visible.]
 
-SECTION A — GLOBAL SPACE DEFINITION (one sentence):
-"Open-concept [name the zones you actually see — e.g. living, dining, and kitchen] space with connected architecture, shared flooring, and unified ceiling."
+Create cohesive ${designStyle} staging with ${colorPalette} tones, proportional furniture sizing appropriate for a large open-concept space, and unified material language throughout all connected zones.${anchorDNA && dnaTier === 'full' ? ` Match the established design DNA from the anchor staging: ${anchorDNA}` : ''}
 
-SECTION B — PRESERVATION (comprehensive list):
-"Preserve all original architecture, room dimensions, wall placement, windows, cabinetry, appliances, ceiling height, flooring layout, and camera perspective."
-Then list every permanent element you see — exact colors, materials, finishes. Cabinetry color/style, countertop material, flooring, fireplace surround, ALL ceiling fixtures (chandelier location, pendant locations, ceiling fan location), windows, appliances, island geometry and base color, tile, hardware. If island is visible: "DO NOT remove or relocate the kitchen island."
+[BLANK: Include this block ONLY if fireplace is visible in the photo — otherwise delete this entire line]
+Living room zone: Define the seating area at the fireplace wall using a large natural fiber area rug positioned approximately 1 foot away from the fireplace wall. Place a seating grouping centered on the rug facing the fireplace with proportional furniture. Maintain realistic circulation around all furniture.
 
-SECTION C — GLOBAL STYLE (one paragraph, before any zone instructions):
-"Create cohesive ${designStyle} staging with ${colorPalette} tones, proportional furniture sizing appropriate for a large open-concept space, and unified material language throughout all connected zones."
-${anchorDNA && dnaTier === 'full' ? `DNA from anchor staging — match these established choices: ${anchorDNA}` : ''}
+[BLANK: Include this block ONLY if chandelier is visible in the photo — otherwise delete this entire line]
+Dining zone: Define the dining area using a large woven oval rug centered directly beneath the hanging chandelier. Place a dining table with chairs centered on the rug with proper spacing and natural traffic flow around the table.
 
-SECTION D — ZONE INSTRUCTIONS (Living first, then Dining, then Kitchen):
-Write ONLY zones you can actually see. Use ONLY fixture anchors visible in the photo.
+[BLANK: Include this block ONLY if kitchen island is visible in the photo — otherwise delete this entire line]
+Kitchen zone: Add counter stools on the far side of the island only — NOT the camera-facing side. Minimal countertop styling only — one small plant or bowl, nothing more.
 
-Living zone (write ONLY if fireplace is visible):
-"Living room zone: Define the seating area at the fireplace wall using a large natural fiber area rug positioned approximately 1 foot away from the fireplace wall. Place a seating grouping centered on the rug facing the fireplace with proportional furniture. Maintain realistic circulation around all furniture."
+Maintain realistic scale, open circulation paths between all connected zones, and visual continuity throughout the space. Lighting should remain natural and consistent with the original image. MLS-photorealistic rendering with accurate furniture proportions and no architectural modifications.
 
-Dining zone (write ONLY if chandelier is visible):
-"Dining zone: Define the dining area using a large woven oval rug centered directly beneath the hanging chandelier. Place a dining table with chairs centered on the rug with proper spacing and natural traffic flow around the table."
+Do not alter walls, windows, cabinetry, flooring layout, ceiling structure, fireplace dimensions, lighting fixtures, appliances, room proportions, or camera perspective. ${stagingDNA?.colorPalette ? `Palette must stay within: ${Array.isArray(stagingDNA.colorPalette) ? stagingDNA.colorPalette.join(', ') : stagingDNA.colorPalette}.` : `Avoid dark stained wood, cognac leather, black metal furniture frames, traditional rug patterns, table lamps.`} Avoid excessive furniture, oversized decor, clutter, distorted geometry, duplicate objects, unrealistic staging, warped rugs, floating furniture, or fantasy lighting.
 
-Kitchen zone (write ONLY if island is visible):
-"Kitchen zone: Add counter stools on the far side of the island only — NOT the camera-facing side. Minimal countertop styling only — one small plant or bowl, nothing more."
-
-SECTION E — CIRCULATION + REALISM (required):
-"Maintain realistic scale, open circulation paths between all connected zones, and visual continuity throughout the space. Lighting should remain natural and consistent with the original image. MLS-photorealistic rendering with accurate furniture proportions and no architectural modifications."
-
-SECTION F — NEGATIVE PROMPT (always last):
-"Do not alter walls, windows, cabinetry, flooring layout, ceiling structure, fireplace dimensions, lighting fixtures, appliances, room proportions, or camera perspective. ${
-  stagingDNA?.colorPalette ?
-  `Palette must stay within: ${Array.isArray(stagingDNA.colorPalette) ? stagingDNA.colorPalette.join(', ') : stagingDNA.colorPalette}.` :
-  `Avoid dark stained wood, cognac leather, black metal furniture frames, traditional rug patterns, table lamps.`
-} Avoid excessive furniture, oversized decor, clutter, distorted geometry, duplicate objects, unrealistic staging, warped rugs, floating furniture, or fantasy lighting."
-
-Return ONLY the final prompt text — no section labels, no headers, no explanation. Write it as flowing paragraphs exactly as Decor8 will receive it. Sections A through F run together as one continuous prompt.` : `
+OUTPUT RULES — CRITICAL:
+- Output the completed template only — no preamble, no explanation, no section labels
+- Every word outside [BLANK] brackets must appear verbatim in your output
+- Replace each [BLANK] with only what is specified — nothing more
+- Zone blocks marked "Include ONLY if visible" must be completely removed if that fixture is not in the photo
+- Do not add furniture descriptions, dimensions, or style notes beyond what the template contains` : `
 ANALYZE THE PHOTO AND IDENTIFY:
 1. Camera position and direction
 2. Room focal point (fireplace, view, feature wall)

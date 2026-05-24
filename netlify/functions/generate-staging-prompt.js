@@ -125,41 +125,40 @@ Do NOT replicate the living/dining furniture. Use appropriate furniture for this
 MATCH ONLY: wood tones, metal finishes, color palette, accessory density and restraint.` : ''}
 
 ${openPlanZones ? `
-OPEN PLAN STAGING — GUARDRAILS + STYLE ONLY
+OPEN PLAN PROMPT — CRITICAL API BEHAVIOR:
+When a custom prompt is sent to Decor8, room_type, design_style, color_scheme, and speciality_decor are ALL IGNORED. Your prompt must be fully self-contained — it must declare this is an open plan space, carry the style, palette, and furniture descriptions entirely within the prompt text.
 
-This is an open plan space staged with Decor8's native openplan room type. Decor8 controls zone placement automatically — do NOT write placement coordinates or tell it where to put furniture zones. Your job is guardrails and style only.
+ANALYZE THE PHOTO AND IDENTIFY:
+1. Every permanent fixture visible — list each specifically for the PRESERVE block
+2. Which side of the island faces the camera (near) vs away (far) — if island is present
+3. What open floor zones are available for furniture placement
 
-ANALYZE THE PHOTO AND IDENTIFY ONLY:
-1. Which permanent fixtures are in the frame that must NOT be moved or removed
-2. Which side of the island faces the camera (near) vs away from camera (far/back)
-3. What the design style, materials, and palette should look like
+GENERATE A SELF-CONTAINED OPEN PLAN STAGING PROMPT structured exactly as follows:
 
-GENERATE A PROMPT WITH THREE SECTIONS ONLY:
+OPENING LINE (required):
+Start with: "Virtually stage this open plan [describe the two zones you see — e.g. living and dining area, or kitchen and living area] in [${designStyle}] style with [${colorPalette}] palette."
 
-SECTION 1 — PRESERVE (non-negotiable):
-List every permanent fixture that must remain exactly as photographed. Be specific: island geometry, cabinetry, appliances, fireplace, flooring, windows, pendants, ceiling fans. If the kitchen island is visible — state explicitly: DO NOT remove or relocate the kitchen island.
+PRESERVE EXACTLY (required, list every item):
+Every permanent architectural element visible in this photo. Be specific about colors and materials. If kitchen island is visible write: "DO NOT remove or relocate the kitchen island." List cabinetry color, countertop material, flooring, fireplace surround, ceiling fixtures, windows, appliances, tile — everything that exists in the original photo.
 
-SECTION 2 — NEGATIVE CONSTRAINTS (what Decor8 must NOT do):
-Based on what you see in the photo, write explicit prohibitions:
-- If island is in frame: "Do NOT remove or relocate the kitchen island"
-- If bar stools should appear: "Bar stools on far side of island only — NOT on camera-facing side"
-- If dining table would crowd visible space: "Do NOT place dining table in the foreground floor area"
-- If great room zone is background: "Do NOT over-furnish the great room background — one sofa grouping only"
-Write only the prohibitions that are relevant to THIS specific photo.
+FURNITURE — describe each piece by what it looks like, NOT where to put it:
+Decor8's openplan spatial model handles zone placement. Your job is describing materials and style only:
+- Sofa: fabric type, color, profile, leg style — NO placement instructions
+- Dining table: material, shape, finish — NO placement instructions  
+- Dining chairs: style, material, seat — NO placement instructions
+- Bar stools (if island visible): seat material, frame material — specify "far side of island only, NOT camera-facing side"
+- Coffee table: material, shape, finish
+- Area rug: texture, weave, color, approximate size
+- Art: style description, dominant colors — NO wall placement instructions
+- Plants: type, pot style — maximum one
 
-SECTION 3 — STYLE + MATERIALS:
-Describe exactly what the furniture should look like within Decor8's available inventory:
-- Sofa: fabric, color, profile, leg style
-- Bar stools if applicable: seat material, frame material, height
-- Coffee table: material, shape
-- Dining set if applicable: table material/shape, chair style
-- Area rug: texture, color, pattern
-- Art: style, colors, approximate size
-- Props: maximum 2-3 items total, describe each specifically
-- Color palette: 3-4 specific colors that must dominate
-- What NOT to add: list specific items that would clash with the home's palette or style
+PALETTE:
+List 3-4 specific colors that must dominate. List 2-3 specific items that must NOT appear (e.g. "no dark stained wood, no traditional patterns, no table lamps").
 
-Return ONLY the prompt text in these three sections. No explanation, no preamble.` : `
+ATMOSPHERE:
+One sentence: lighting quality, mood, photorealism standard for MLS photography.
+
+Return ONLY the prompt text — no section headers, no explanation, no preamble. Write it as a single flowing staging instruction that Decor8 receives directly.` : `
 ANALYZE THE PHOTO AND IDENTIFY:
 1. Camera position and direction
 2. Room focal point (fireplace, view, feature wall)

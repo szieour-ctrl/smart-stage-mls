@@ -55,7 +55,9 @@ async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPr
   // Per Decor8 API spec: when prompt is provided, room_type/design_style/color_scheme
   // are ignored — but sending them alongside the prompt influences diffusion anyway.
   // Strip them entirely when prompt is present to match API Playground behavior.
-  const payload = customPrompt
+  // null prompt = Strategy A (native Decor8) — use enums only
+  // non-null prompt = Strategy B/C (guided/full) — strip enums per API spec
+  const payload = (customPrompt && customPrompt.length > 0)
     ? JSON.stringify({
         input_image_url: imageUrl,
         prompt: customPrompt,
@@ -71,7 +73,7 @@ async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPr
         color_scheme: colorScheme || "COLOR_SCHEME_9",
       });
 
-  console.log(`Decor8: ${customPrompt ? `PROMPT mode (${customPrompt.length} chars)` : `ENUM mode room=${roomType} style=${designStyle}`}`);
+  console.log(`Decor8: ${(customPrompt && customPrompt.length > 0) ? `PROMPT mode (${customPrompt.length} chars)` : `ENUM mode room=${roomType} style=${designStyle}`}`);
   const result = await httpsRequest({
     hostname: "api.decor8.ai",
     path: "/generate_designs_for_room",

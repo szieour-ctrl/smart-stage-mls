@@ -32,40 +32,47 @@ exports.handler = async (event) => {
     const claudeKey = process.env.ANTHROPIC_API_KEY;
     if (!claudeKey) return { statusCode: 500, headers, body: JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }) };
 
-    const prompt = `You are analyzing a real estate listing photo of a ${roomName || "room"} to generate precise furniture placement instructions for AI virtual staging.
+    const prompt = `You are analyzing a real estate listing photo for MLS-compliant virtual staging.
+Return ONLY valid JSON — no markdown, no explanation, no preamble.
 
-Analyze this photo carefully and return ONLY valid JSON — no markdown, no explanation.
+Analyze this photo of a ${roomName || "room"} and return this exact structure:
 
-Examine:
-1. Camera position and angle (where is the photographer standing, what direction are they facing)
-2. Room focal point (fireplace, windows, feature wall, island)
-3. Islands/peninsulas — which side faces the camera vs away from camera
-4. Empty floor areas — describe exactly where open floor space is
-5. Existing permanent fixtures (appliances, cabinetry, fireplace, windows) — note their positions
-6. Connected/adjacent visible spaces
-7. Natural light direction
-8. What furniture would logically go WHERE based on the actual geometry
-
-Return this exact shape:
 {
-  "cameraFacing": "description of camera position and direction",
-  "focalPoint": "primary visual anchor of the room",
-  "islandSides": "if kitchen — which side of island faces camera (near) vs away (far/back)",
-  "openFloorAreas": "description of where empty floor space exists",
-  "furniturePlacement": [
-    "Bar stools/seating: specific side and distance from camera",
-    "Primary seating: specific wall or area",
-    "Dining: specific location if applicable",
-    "Other key pieces: specific placement"
+  "layoutType": "single_zone | open_plan",
+  "cameraFacing": "brief description of camera position and direction",
+  "focalPoint": "primary visual anchor — fireplace, view, feature wall, island",
+  "islandSide": "if island visible: which side faces camera (near/camera-facing) vs away (far/back). null if no island.",
+  "preserveList": "comprehensive comma-separated list of every permanent element visible — exact colors and materials for each: cabinetry color/style, countertop material, flooring, fireplace surround, ALL ceiling fixtures by location, windows, appliances, island geometry and base color, tile, hardware, doors, trim. Be specific.",
+  "zones": [
+    {
+      "type": "living | dining | kitchen | bedroom | bathroom | office",
+      "anchor": "the fixed architectural element that defines this zone — fireplace, chandelier, island, window wall",
+      "priority": 1,
+      "density": "light | medium | high",
+      "rugShape": "rectangular | oval | none — appropriate rug shape for this zone"
+    }
   ],
-  "avoidAreas": ["list areas where furniture must NOT go — e.g. in front of appliances, blocking pathways"],
+  "trafficFlow": "brief description of primary circulation path",
+  "visualWeighting": {
+    "primary": "zone type that should dominate visually",
+    "secondary": "supporting zone",
+    "background": "zone to keep light/understaged"
+  },
+  "avoidAreas": ["list specific areas where furniture must NOT go"],
   "lightDirection": "where natural light is coming from",
-  "spatialNotes": "any other important spatial context for staging"
-}`;
+  "spatialNotes": "any critical spatial context — e.g. island blocks certain placements, low ceiling in one zone"
+}
+
+RULES:
+- layoutType is "open_plan" ONLY if two or more functional zones share visible connected floor space
+- zones array must be ordered by priority (1 = most important visually)
+- preserveList must be exhaustive — this feeds directly into the MLS PRESERVE block
+- If island is visible always end preserveList with "DO NOT remove or relocate the kitchen island"
+- Return ONLY the JSON object — nothing else`;
 
     const payload = JSON.stringify({
       model: "claude-haiku-4-5",
-      max_tokens: 800,
+      max_tokens: 1000,
       messages: [{
         role: "user",
         content: [
@@ -102,10 +109,10 @@ Return this exact shape:
     try {
       analysis = JSON.parse(clean);
     } catch(e) {
-      // If JSON parse fails, return raw text so frontend can still use it
-      analysis = { spatialNotes: clean, furniturePlacement: [], avoidAreas: [] };
+      analysis = { layoutType: "single_zone", spatialNotes: clean, zones: [], avoidAreas: [], preserveList: "" };
     }
 
+    console.log("Room analysis:", analysis.layoutType, "| zones:", analysis.zones?.length, "| focal:", analysis.focalPoint);
     return { statusCode: 200, headers, body: JSON.stringify({ analysis }) };
 
   } catch (err) {

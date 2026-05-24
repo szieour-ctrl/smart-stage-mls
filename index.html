@@ -158,6 +158,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 #toast.error{background:var(--danger);}
 #toast.success{background:var(--success);}
 #sbs-canvas{display:none;}
+/* ── Open Plan Strategy Toggle ── */
+.op-strategy-wrap{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:var(--cream);border:1px solid var(--border);border-radius:3px;}
+.op-strategy-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:600;white-space:nowrap;}
+.op-strategy-btn{font-size:0.72rem;padding:4px 10px;border-radius:2px;border:1px solid var(--border);background:#fff;color:var(--ink);cursor:pointer;letter-spacing:0.04em;transition:all 0.15s;}
+.op-strategy-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600;}
+.op-strategy-desc{font-size:0.68rem;color:var(--muted);margin-left:4px;}
 /* ── Prompt Preview Modal ── */
 #prompt-modal{position:fixed;inset:0;background:rgba(10,8,6,0.92);z-index:9100;display:flex;align-items:center;justify-content:center;padding:20px;}
 #prompt-modal.hidden{display:none!important;}
@@ -495,6 +501,7 @@ const SESSION = {
   intake:{},rooms:[],anchorRoomId:null,
   stagingDNA: null,        // Extracted from staged Open Plan image
   openPlanRoomId: null,    // Room ID of the Open Plan — must be staged first
+  openPlanStrategy: 'guided', // 'native' | 'guided' | 'full'
 };
 let _lbRoomId = null;
 
@@ -908,6 +915,15 @@ function renderRoomQueue(){
         ${!isAnchor?`<button class="btn btn-ghost btn-sm" onclick="resetRoom('${room.id}')">Re-Stage</button>`:''}`;
       return '';
     })();
+    // Open Plan Strategy Toggle (always visible for open plan rooms)
+    const strategyToggle = room.isOpenPlan ? `<div class="op-strategy-wrap">
+      <span class="op-strategy-label">Open Plan Strategy:</span>
+      <button class="op-strategy-btn ${SESSION.openPlanStrategy==='native'?'active':''}" onclick="setOpenPlanStrategy('native')">A · Native Decor8</button>
+      <button class="op-strategy-btn ${SESSION.openPlanStrategy==='guided'?'active':''}" onclick="setOpenPlanStrategy('guided')">B · Guided Zoning</button>
+      <button class="op-strategy-btn ${SESSION.openPlanStrategy==='full'?'active':''}" onclick="setOpenPlanStrategy('full')">C · Full Placement</button>
+      <span class="op-strategy-desc">${SESSION.openPlanStrategy==='native'?'Decor8 picks everything':SESSION.openPlanStrategy==='guided'?'Rug anchors + style guidance':'Detailed placement + style'}</span>
+    </div>` : '';
+
     // DNA status display for open plan
     const dnaPanel = room.isOpenPlan ? (()=>{
       if(room.dnaStatus==='extracting') return `<div style="background:#f4faf7;border-top:1px solid #b8ddd0;padding:10px 16px;display:flex;align-items:center;gap:8px;"><span class="spinner spinner-green"></span><span style="font-size:0.8rem;color:var(--success);">Claude Vision reading staged image — extracting Design DNA for all rooms...</span></div>`;
@@ -978,7 +994,7 @@ function renderRoomQueue(){
       ${room.adjacentRooms.length?`<div class="room-card-adj">Adjacent: ${room.adjacentRooms.join(', ')}</div>`:''}${sfBadge}${spatialBadge}
       <div class="room-card-status ${room.status}">${statusLabel}</div></div>
       <div class="room-card-actions">${actions}${modeToggle}</div></div>
-      ${resultHtml}${dnaPanel}${iterHtml}${finalHtml}</div>`;
+      ${strategyToggle}${resultHtml}${dnaPanel}${iterHtml}${finalHtml}</div>`;
   }).join('');
 }
 
@@ -1293,6 +1309,8 @@ async function stageRoom(roomId, iterNote) {
           return null;
         })(),
         stagingDNA: getDNATier(room) === 'full' ? SESSION.stagingDNA : null,
+        openPlanZones: room.isOpenPlan ? (room.adjacentRooms.length ? room.adjacentRooms.join(' + ') : room.roomName) : null,
+        openPlanStrategy: room.isOpenPlan ? (SESSION.openPlanStrategy || 'guided') : null,
       })
     });
 
@@ -1544,6 +1562,15 @@ function downloadSideBySide(roomId,enhId,tier){
   oI.onload=sI.onload=go;oI.src=orig.dataUrl;sI.src='data:image/jpeg;base64,'+b64;
 }
 function triggerDownload(dataUrl,filename){const a=document.createElement('a');a.href=dataUrl;a.download=filename;a.click();}
+
+// ══════════════════════════════════════════
+// OPEN PLAN STRATEGY
+// ══════════════════════════════════════════
+function setOpenPlanStrategy(strategy) {
+  SESSION.openPlanStrategy = strategy;
+  renderRoomQueue();
+  showToast(`Open Plan strategy: ${strategy === 'native' ? 'A · Native Decor8' : strategy === 'guided' ? 'B · Guided Zoning' : 'C · Full Placement'}`, 'success');
+}
 
 // ══════════════════════════════════════════
 // PROMPT PREVIEW MODAL

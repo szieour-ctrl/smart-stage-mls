@@ -68,7 +68,16 @@ RULES:
 - zones array must be ordered by priority (1 = most important visually)
 - preserveList must be exhaustive — this feeds directly into the MLS PRESERVE block
 - If island is visible always end preserveList with "DO NOT remove or relocate the kitchen island"
-- Return ONLY the JSON object — nothing else`;
+- Return ONLY the JSON object — nothing else
+
+ZONE PRIORITY RULES — CRITICAL — ALWAYS FOLLOW:
+- If a FIREPLACE is visible: its zone is ALWAYS priority 1, zone type "living", anchor "fireplace"
+- If a CHANDELIER is visible and separate from the fireplace: it anchors the dining zone at priority 2, anchor "chandelier"
+- Kitchen/island is ALWAYS the lowest priority zone and background in visualWeighting
+- rugShape for the living zone (fireplace) is ALWAYS "rectangular rug" — NEVER "none"
+- rugShape for the dining zone (chandelier) is ALWAYS "oval rug" — NEVER "none"
+- "none" is only valid for kitchen zone rugShape
+- primaryZone must be "living" if a fireplace is visible — never "kitchen" or "dining"`;
 
     const payload = JSON.stringify({
       model: "claude-haiku-4-5",

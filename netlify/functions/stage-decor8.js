@@ -57,9 +57,14 @@ async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPr
   // Strip them entirely when prompt is present to match API Playground behavior.
   // null prompt = Strategy A (native Decor8) — use enums only
   // non-null prompt = Strategy B/C (guided/full) — strip enums per API spec
+  // When a custom prompt is sent, design_style and color_scheme are ignored per API spec.
+  // However room_type is NOT truly ignored — Decor8 uses it to activate structural
+  // preservation and spatial segmentation logic (especially "openplan").
+  // Always send room_type. Only strip design_style and color_scheme when prompt is present.
   const payload = (customPrompt && customPrompt.length > 0)
     ? JSON.stringify({
         input_image_url: imageUrl,
+        room_type: roomType || "livingroom",  // keeps Decor8 structural logic active
         prompt: customPrompt,
         num_images: 1,
         scale_factor: 2,

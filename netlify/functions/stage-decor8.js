@@ -52,17 +52,26 @@ async function uploadToImgBB(imageBase64, mimeType, apiKey) {
 }
 
 async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPrompt, apiKey) {
-  const payload = JSON.stringify({
-    input_image_url: imageUrl,
-    room_type: roomType || "livingroom",
-    design_style: designStyle || "transitional",
-    num_images: 1,
-    scale_factor: 2,
-    color_scheme: colorScheme || "COLOR_SCHEME_9",
-    ...(customPrompt ? { prompt: customPrompt } : {}),
-  });
+  // Per Decor8 API spec: when prompt is provided, room_type/design_style/color_scheme
+  // are ignored — but sending them alongside the prompt influences diffusion anyway.
+  // Strip them entirely when prompt is present to match API Playground behavior.
+  const payload = customPrompt
+    ? JSON.stringify({
+        input_image_url: imageUrl,
+        prompt: customPrompt,
+        num_images: 1,
+        scale_factor: 2,
+      })
+    : JSON.stringify({
+        input_image_url: imageUrl,
+        room_type: roomType || "livingroom",
+        design_style: designStyle || "organicmodern",
+        num_images: 1,
+        scale_factor: 2,
+        color_scheme: colorScheme || "COLOR_SCHEME_9",
+      });
 
-  console.log(`Decor8: room=${roomType} style=${designStyle} promptLen=${customPrompt?.length || 0}`);
+  console.log(`Decor8: ${customPrompt ? `PROMPT mode (${customPrompt.length} chars)` : `ENUM mode room=${roomType} style=${designStyle}`}`);
   const result = await httpsRequest({
     hostname: "api.decor8.ai",
     path: "/generate_designs_for_room",

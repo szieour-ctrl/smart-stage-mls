@@ -17,6 +17,125 @@ function httpsRequest(options, body) {
   });
 }
 
+// ── OPEN PLAN PROMPT BUILDER ──────────────────────────────────────────────────
+// Claude returns metadata. JS assembles the deterministic prompt.
+// Decor8 receives: short, structured, anchor-based guidance only.
+// No prose. No exact dimensions. No placement coordinates.
+function buildOpenPlanPrompt({ preserveList, designStyle, colorPalette, designDNA, spatialDNA, openPlanStrategy }) {
+
+  // Strategy A — pure native Decor8, no custom prompt
+  if (openPlanStrategy === 'native') return null;
+
+  const living  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'living')  || { anchor: 'fireplace',   boundary: 'rectangular rug' };
+  const dining  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'dining')  || { anchor: 'chandelier',  boundary: 'oval rug' };
+  const kitchen = spatialDNA?.zoneRelationships?.find(z => z.zone === 'kitchen') || { anchor: 'island',      boundary: null };
+
+  const primaryZone   = spatialDNA?.primaryZone   || 'living';
+  const secondaryZone = spatialDNA?.secondaryZone  || 'dining';
+
+  // Style/palette from DNA if available, otherwise from session intake
+  const style   = designDNA?.overallStyle || designStyle || 'Organic Modern';
+  const palette = designDNA?.colorPalette
+    ? (Array.isArray(designDNA.colorPalette) ? designDNA.colorPalette.join(', ') : designDNA.colorPalette)
+    : colorPalette || 'warm neutrals';
+  const wood    = designDNA?.woodTones    || 'natural oak';
+  const metals  = designDNA?.metalFinishes || 'brushed nickel';
+
+  // Strategy C — full placement control (longer prompt)
+  if (openPlanStrategy === 'full') {
+    return `PRESERVE EXACTLY: ${preserveList}
+
+Open-concept great room with connected kitchen, dining, and living areas. Preserve all original architecture, room dimensions, wall placement, windows, cabinetry, appliances, ceiling height, flooring layout, and camera perspective.
+
+Create cohesive ${style} staging throughout the entire shared space using ${wood}, ${metals}, and a ${palette} palette.
+
+Living room zone: Define the primary seating area around the ${living.anchor} using a large ${living.boundary} and a proportional high-density seating group facing the ${living.anchor}. Maintain realistic circulation around all furniture.
+
+Dining zone: Define the dining area around the ${dining.anchor} using a large ${dining.boundary} centered directly beneath the ${dining.anchor}. Place a dining table with chairs centered on the rug with proper spacing and natural traffic flow.
+
+Kitchen zone: Add proportional counter stools on the far side of the island only — NOT the camera-facing side. Minimal countertop styling — one small plant or bowl, nothing more.
+
+Maintain realistic circulation paths and visual openness between all connected zones. MLS-photorealistic staging only.
+
+Do not alter architecture, room dimensions, cabinetry, flooring layout, windows, walls, ceiling structure, appliances, fireplace dimensions, or camera perspective. Avoid excessive furniture, clutter, distorted geometry, duplicate objects, warped rugs, floating furniture, or fantasy lighting.`;
+  }
+
+  // Strategy B — guided zoning (default, shorter, lighter)
+  return `PRESERVE EXACTLY: ${preserveList}
+
+Open-concept great room with connected kitchen, dining, and living spaces. Create cohesive ${style} staging throughout the entire shared space using ${wood}, ${metals}, and a ${palette} palette.
+
+Define the primary ${primaryZone} area around the ${living.anchor} using a large ${living.boundary} and proportional seating group.
+
+Define the ${secondaryZone} zone around the ${dining.anchor} using a large ${dining.boundary} with a moderate-density dining arrangement.
+
+Kitchen styling should remain light and minimal with proportional counter stools on the far side of the island only.
+
+Maintain realistic circulation paths and visual openness between all connected zones. MLS-photorealistic staging only.
+
+Do not alter architecture, room dimensions, cabinetry, flooring layout, windows, walls, ceiling structure, appliances, fireplace dimensions, or camera perspective. Avoid excessive furniture, clutter, distorted geometry, duplicate objects, warped rugs, floating furniture, or fantasy lighting.`;
+}
+
+// ── CLAUDE VISION — METADATA EXTRACTION FOR OPEN PLAN ────────────────────────
+// Claude's ONLY job for open plan: classify, detect anchors, build preserve list.
+// Claude does NOT write the final prompt — JS does.
+async function extractOpenPlanMetadata({ imageBase64, mimeType, roomName, claudeKey }) {
+  const prompt = `You are analyzing a real estate listing photo for MLS virtual staging.
+Return ONLY valid JSON — no markdown, no explanation.
+
+Analyze this photo and return:
+
+{
+  "preserveList": "comprehensive comma-separated list of every permanent element visible — exact color and material: cabinetry color/style, countertop material, flooring, fireplace surround color/material, ALL ceiling fixtures by location (chandelier, pendants, ceiling fan), windows, appliances, island geometry and base color, tile, hardware, doors, trim. End with 'DO NOT remove or relocate the kitchen island.' if island is visible.",
+  "zones": [
+    {
+      "zone": "living | dining | kitchen",
+      "anchor": "fireplace | chandelier | island | ceiling fan | window wall",
+      "boundary": "rectangular rug | oval rug | none",
+      "density": "light | medium | high",
+      "visible": true
+    }
+  ],
+  "primaryZone": "living | dining | kitchen",
+  "secondaryZone": "living | dining | kitchen",
+  "trafficFlow": "open_central | perimeter | diagonal",
+  "islandCameraSide": "near (camera-facing, NO stools) | far (away from camera, stool side) | null"
+}
+
+Only include zones that are actually visible in the photo. Order zones by visual prominence.`;
+
+  const payload = JSON.stringify({
+    model: "claude-haiku-4-5",
+    max_tokens: 800,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: mimeType || "image/jpeg", data: imageBase64 } },
+        { type: "text", text: prompt }
+      ]
+    }]
+  });
+
+  const result = await httpsRequest({
+    hostname: "api.anthropic.com",
+    path: "/v1/messages",
+    method: "POST",
+    headers: {
+      "x-api-key": claudeKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+      "content-length": Buffer.byteLength(payload)
+    }
+  }, payload);
+
+  if (result.status !== 200) throw new Error("Claude metadata extraction failed");
+
+  const text = result.body?.content?.[0]?.text?.trim() || "{}";
+  const clean = text.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(clean); }
+  catch(e) { return { preserveList: "", zones: [], primaryZone: "living", secondaryZone: "dining" }; }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
   const headers = {
@@ -35,14 +154,49 @@ exports.handler = async (event) => {
       iterationNote, priorStagingDescription,
       shotFocus, adjacentRooms,
       anchorDNA, stagingDNA, dnaTier,
+      openPlanStrategy,
     } = JSON.parse(event.body);
 
     const claudeKey = process.env.ANTHROPIC_API_KEY;
     if (!claudeKey) return { statusCode: 500, headers, body: JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }) };
 
-    // ── Build the consultant prompt ───────────────────────────────────────────
     const isIteration = !!(iterationNote && priorStagingDescription);
+    const isOpenPlan  = !!openPlanZones;
 
+    // ── OPEN PLAN — METADATA → DETERMINISTIC PROMPT ──────────────────────────
+    if (isOpenPlan && !isIteration) {
+
+      // Strategy A: Native Decor8 — no prompt at all
+      if (openPlanStrategy === 'native') {
+        console.log("Open plan: NATIVE strategy — no custom prompt");
+        return { statusCode: 200, headers, body: JSON.stringify({ prompt: null }) };
+      }
+
+      // Strategies B and C: Claude extracts metadata, JS builds the prompt
+      console.log("Open plan: extracting metadata for strategy", openPlanStrategy || 'guided');
+      const metadata = await extractOpenPlanMetadata({ imageBase64, mimeType, roomName, claudeKey });
+
+      const spatialDNA = metadata.zones ? {
+        zoneRelationships: metadata.zones.filter(z => z.visible !== false),
+        primaryZone:   metadata.primaryZone   || 'living',
+        secondaryZone: metadata.secondaryZone || 'dining',
+        trafficFlow:   metadata.trafficFlow   || 'open_central',
+      } : stagingDNA?.spatialDNA || null;
+
+      const prompt = buildOpenPlanPrompt({
+        preserveList: metadata.preserveList || '',
+        designStyle,
+        colorPalette,
+        designDNA: stagingDNA,
+        spatialDNA,
+        openPlanStrategy: openPlanStrategy || 'guided',
+      });
+
+      console.log("Open plan prompt built:", prompt ? `${prompt.length} chars` : "null (native)");
+      return { statusCode: 200, headers, body: JSON.stringify({ prompt, metadata }) };
+    }
+
+    // ── SINGLE ROOM & ITERATION — CLAUDE VISION GENERATES PROSE ──────────────
     const systemPrompt = `You are an expert real estate staging consultant generating virtual staging prompts for MLS listing photography. This tool is used exclusively for MetroList MLS listings — not a design or remodel tool.
 
 MLS PRESERVE LAW — ABSOLUTE — OVERRIDES EVERYTHING ELSE:
@@ -60,7 +214,7 @@ Every prompt you generate MUST begin with a PRESERVE EXACTLY block listing every
 - Island geometry and base color — EXACTLY as photographed
 - House exterior color and materials — EXACTLY as photographed
 
-The AI staging engine may ONLY add furniture, rugs, art, and soft accessories into empty space. It may NOT remodel, replace, recolor, or alter any existing permanent element. Always write PRESERVE EXACTLY first in every prompt before any styling instruction.
+The AI staging engine may ONLY add furniture, rugs, art, and soft accessories into empty space. It may NOT remodel, replace, recolor, or alter any existing permanent element.
 
 STAGING SCOPE — ADDITIONS INTO EMPTY SPACE ONLY:
 Furniture, area rugs, wall art, minimal accessories, soft goods (pillows, throws, towels, bath mats).
@@ -74,30 +228,27 @@ PROPS STANDARDS:
     let userPrompt;
 
     if (isIteration) {
-      // ── ITERATION MODE ────────────────────────────────────────────────────
       userPrompt = `You are revising a virtual staging result for an MLS listing photo.
 
-MLS PRESERVE LAW — MANDATORY: Begin your prompt with PRESERVE EXACTLY, listing every permanent element visible in the original photo (cabinetry color/style, countertops, flooring, walls, fixtures, tile, appliances, mirrors, windows, trim). These MUST NOT change. Only furniture, rugs, art, and soft accessories may be added or adjusted.
+MLS PRESERVE LAW — MANDATORY: Begin your prompt with PRESERVE EXACTLY, listing every permanent element visible in the original photo. These MUST NOT change. Only furniture, rugs, art, and soft accessories may be adjusted.
 
 CURRENT STAGING: ${priorStagingDescription}
-
 REVISION REQUESTED: ${iterationNote}
-
 ROOM: ${roomName} | STYLE: ${designStyle} | PALETTE: ${colorPalette} | BUYER: ${buyerProfile}
 ${anchorDNA ? `DESIGN CONTINUITY (match this): ${anchorDNA}` : ''}
 
-Analyze both images carefully. Generate a revised staging prompt that:
-1. Opens with PRESERVE EXACTLY — every permanent architectural element in the original photo
+Generate a revised staging prompt that:
+1. Opens with PRESERVE EXACTLY — every permanent architectural element
 2. Keeps EVERYTHING from the current staging EXCEPT what the revision requests
 3. Makes ONLY the specific changes requested — nothing else moves
 
-Return ONLY the prompt text — no explanation, no JSON, no markdown. Just the staging prompt.`;
+Return ONLY the prompt text — no explanation, no JSON, no markdown.`;
 
     } else {
-      // ── FRESH STAGING MODE ────────────────────────────────────────────────
+      // Single room fresh staging
       userPrompt = `Analyze this vacant real estate listing photo and generate a virtual staging prompt for an MLS listing.
 
-MANDATORY: Your prompt MUST open with a PRESERVE EXACTLY block. Scan the photo carefully and list every permanent element you see — cabinetry (exact color and style), countertop material and color, flooring, wall color, all installed fixtures, tile, appliances, mirrors, windows, trim, fireplace, island geometry, exterior materials. Every item in PRESERVE EXACTLY tells the staging engine it cannot touch that element. This protects the listing from MLS compliance violations.
+MANDATORY: Your prompt MUST open with PRESERVE EXACTLY. Scan the photo and list every permanent element — cabinetry (exact color and style), countertop material, flooring, wall color, all installed fixtures, tile, appliances, mirrors, windows, trim, fireplace, island geometry. Every item in PRESERVE EXACTLY tells the staging engine it cannot touch that element.
 
 SESSION PARAMETERS:
 - Room: ${roomName} (Decor8 room type: ${roomType})
@@ -109,55 +260,11 @@ SESSION PARAMETERS:
 - MLS Mode: ${mlsMode ? 'YES — photorealistic, architecturally accurate' : 'Standard'}
 ${shotFocus ? `- Shot Focus: ${shotFocus}` : ''}
 ${adjacentRooms?.length ? `- Adjacent Rooms Visible: ${adjacentRooms.join(', ')}` : ''}
-${openPlanZones ? `- OPEN PLAN ZONES TO STAGE:\n${openPlanZones}` : ''}
-${anchorDNA && dnaTier === 'full' ? `- OPEN PLAN FURNITURE DNA — MATCH EXACTLY:
-${anchorDNA}
-- Sofa: ${stagingDNA?.sofa || 'match open plan'}
-- Dining set: ${stagingDNA?.diningTable || 'match open plan'} with ${stagingDNA?.diningChairs || 'matching chairs'}
-- Bar stools: ${stagingDNA?.barStools || 'match open plan style'}
-- Area rug: ${stagingDNA?.areaRug || 'match open plan'}
-- Wood tones: ${stagingDNA?.woodTones || 'match open plan'}
-- Metal finishes: ${stagingDNA?.metalFinishes || 'match open plan'}
-- Color palette: ${Array.isArray(stagingDNA?.colorPalette)?stagingDNA.colorPalette.join(', '):(stagingDNA?.colorPalette||'match open plan')}` : ''}
 ${anchorDNA && dnaTier === 'style' ? `- STYLE CONTINUITY (same home — different room):
 ${anchorDNA}
 Do NOT replicate the living/dining furniture. Use appropriate furniture for this room type.
 MATCH ONLY: wood tones, metal finishes, color palette, accessory density and restraint.` : ''}
 
-${openPlanZones ? `
-OPEN PLAN — TEMPLATE FILL MODE.
-Your ONLY job is to scan the photo and fill in the [BLANKS] below. Do not rewrite, paraphrase, or restructure anything outside the blanks. Output the completed template exactly as written — every word outside brackets is locked and must appear verbatim in your output.
-
-SCAN THE PHOTO NOW AND IDENTIFY:
-1. Every permanent fixture — exact colors and materials for the PRESERVE list
-2. Which zones are visible: fireplace? chandelier? kitchen island?
-3. Which side of the island faces the camera (near = camera side = NO stools, far = away from camera = stool side)
-
-NOW OUTPUT THIS COMPLETED TEMPLATE — fill every [BLANK], output everything else verbatim:
-
-PRESERVE EXACTLY: [BLANK: list every permanent element you see — exact color and material for each: cabinetry color/style, countertop material, flooring material/color, fireplace surround color/material, ALL ceiling fixtures by location (chandelier, pendants, ceiling fan), windows, appliances, island geometry and base color, tile, hardware, all doors and trim. End this list with "DO NOT remove or relocate the kitchen island." if island is visible.]
-
-Create cohesive ${designStyle} staging with ${colorPalette} tones, proportional furniture sizing appropriate for a large open-concept space, and unified material language throughout all connected zones.${anchorDNA && dnaTier === 'full' ? ` Match the established design DNA from the anchor staging: ${anchorDNA}` : ''}
-
-[BLANK: Include this block ONLY if fireplace is visible in the photo — otherwise delete this entire line]
-Living room zone: Define the seating area at the fireplace wall using a large natural fiber area rug positioned approximately 1 foot away from the fireplace wall. Place a seating grouping centered on the rug facing the fireplace with proportional furniture. Maintain realistic circulation around all furniture.
-
-[BLANK: Include this block ONLY if chandelier is visible in the photo — otherwise delete this entire line]
-Dining zone: Define the dining area using a large woven oval rug centered directly beneath the hanging chandelier. Place a dining table with chairs centered on the rug with proper spacing and natural traffic flow around the table.
-
-[BLANK: Include this block ONLY if kitchen island is visible in the photo — otherwise delete this entire line]
-Kitchen zone: Add counter stools on the far side of the island only — NOT the camera-facing side. Minimal countertop styling only — one small plant or bowl, nothing more.
-
-Maintain realistic scale, open circulation paths between all connected zones, and visual continuity throughout the space. Lighting should remain natural and consistent with the original image. MLS-photorealistic rendering with accurate furniture proportions and no architectural modifications.
-
-Do not alter walls, windows, cabinetry, flooring layout, ceiling structure, fireplace dimensions, lighting fixtures, appliances, room proportions, or camera perspective. ${stagingDNA?.colorPalette ? `Palette must stay within: ${Array.isArray(stagingDNA.colorPalette) ? stagingDNA.colorPalette.join(', ') : stagingDNA.colorPalette}.` : `Avoid dark stained wood, cognac leather, black metal furniture frames, traditional rug patterns, table lamps.`} Avoid excessive furniture, oversized decor, clutter, distorted geometry, duplicate objects, unrealistic staging, warped rugs, floating furniture, or fantasy lighting.
-
-OUTPUT RULES — CRITICAL:
-- Output the completed template only — no preamble, no explanation, no section labels
-- Every word outside [BLANK] brackets must appear verbatim in your output
-- Replace each [BLANK] with only what is specified — nothing more
-- Zone blocks marked "Include ONLY if visible" must be completely removed if that fixture is not in the photo
-- Do not add furniture descriptions, dimensions, or style notes beyond what the template contains` : `
 ANALYZE THE PHOTO AND IDENTIFY:
 1. Camera position and direction
 2. Room focal point (fireplace, view, feature wall)
@@ -177,9 +284,7 @@ GENERATE A STAGING PROMPT that specifies:
 - What to preserve exactly
 - What adjacent visible spaces should look like (understaged background)
 
-The prompt must be detailed enough that the AI staging engine knows exactly where every piece goes.`}
-
-Return ONLY the staging prompt text — no explanation, no JSON, no preamble. Start directly with the staging description.`;
+Return ONLY the staging prompt text — no explanation, no JSON, no preamble.`;
     }
 
     const payload = JSON.stringify({
@@ -189,10 +294,7 @@ Return ONLY the staging prompt text — no explanation, no JSON, no preamble. St
       messages: [{
         role: "user",
         content: imageBase64 ? [
-          {
-            type: "image",
-            source: { type: "base64", media_type: mimeType || "image/jpeg", data: imageBase64 }
-          },
+          { type: "image", source: { type: "base64", media_type: mimeType || "image/jpeg", data: imageBase64 } },
           { type: "text", text: userPrompt }
         ] : [{ type: "text", text: userPrompt }]
       }]
@@ -218,7 +320,7 @@ Return ONLY the staging prompt text — no explanation, no JSON, no preamble. St
     const prompt = result.body?.content?.[0]?.text?.trim();
     if (!prompt) return { statusCode: 500, headers, body: JSON.stringify({ error: "No prompt returned" }) };
 
-    console.log("Generated prompt length:", prompt.length, "chars");
+    console.log("Single room prompt:", prompt.length, "chars");
     return { statusCode: 200, headers, body: JSON.stringify({ prompt }) };
 
   } catch (err) {

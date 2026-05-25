@@ -912,7 +912,8 @@ function renderRoomQueue(){
         <button class="btn btn-outline btn-sm" onclick="downloadOriginal('${room.id}')">↓ Original</button>
         <button class="btn btn-outline btn-sm" onclick="downloadB64('data:image/jpeg;base64,'+getRoomB64('${room.id}','draft'),'DRAFT_'+bName(getOrigName('${room.id}'))+'.jpg')">↓ Draft</button>
         <button class="btn btn-outline btn-sm" onclick="downloadSideBySide('${room.id}',null,'draft')">↓ Side-by-Side</button>
-        ${!isAnchor?`<button class="btn btn-ghost btn-sm" onclick="resetRoom('${room.id}')">Re-Stage</button>`:''}`;
+        ${!isAnchor?`<button class="btn btn-ghost btn-sm" onclick="resetRoom('${room.id}')">Re-Stage</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="showDecor8Payload('${room.id}')" title="Show exact JSON sent to Decor8 API">{ } API Payload</button>`;
       return '';
     })();
     // Open Plan Strategy Toggle (always visible for open plan rooms)
@@ -1379,6 +1380,7 @@ async function stageRoom(roomId, iterNote) {
     if (!decor8Data?.stagedBase64) throw new Error('Decor8 staging failed after 3 attempts');
 
     room.stagedBase64 = decor8Data.stagedBase64;
+    room.lastDecor8Payload = decor8Data.decor8Payload || null; // store for debug display
     room.status = 'done';
     room.promptStatus = null;
     room.approvedDNA = `${i.style_label} style, ${i.palette_label} palette, ${i.intensity_label} staging, ${i.buyer_label} buyer target, ${i.feeling_label} mood.`;
@@ -1562,6 +1564,40 @@ function downloadSideBySide(roomId,enhId,tier){
   oI.onload=sI.onload=go;oI.src=orig.dataUrl;sI.src='data:image/jpeg;base64,'+b64;
 }
 function triggerDownload(dataUrl,filename){const a=document.createElement('a');a.href=dataUrl;a.download=filename;a.click();}
+
+// ══════════════════════════════════════════
+// DECOR8 API PAYLOAD DEBUGGER
+// ══════════════════════════════════════════
+function showDecor8Payload(roomId) {
+  const room = SESSION.rooms.find(r => r.id === roomId);
+  if (!room) return;
+  const payload = room.lastDecor8Payload;
+  const prompt = room.lastPrompt;
+
+  const content = `
+    <div style="font-family:monospace;font-size:0.78rem;background:#f8f8f8;padding:16px;border-radius:4px;white-space:pre-wrap;word-break:break-word;max-height:70vh;overflow-y:auto;">
+      <div style="font-weight:700;margin-bottom:12px;font-size:0.85rem;color:#333;">Decor8 API JSON Payload</div>
+      ${payload ? `<div style="color:#666;margin-bottom:4px;font-size:0.7rem;">Fields sent to Decor8 /generate_designs_for_room:</div>
+      <div style="color:#1a1a1a;">${JSON.stringify(payload, null, 2).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : '<div style="color:#999;">Payload not available — re-stage to capture</div>'}
+      ${prompt ? `<div style="font-weight:700;margin-top:16px;margin-bottom:4px;font-size:0.85rem;color:#333;">Claude Vision Prompt (sent as "prompt" field above)</div>
+      <div style="color:#555;white-space:pre-wrap;">${prompt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : ''}
+    </div>`;
+
+  // Reuse lightbox for display
+  const lb = document.getElementById('lightbox');
+  lb.innerHTML = `<div style="background:#fff;max-width:860px;width:100%;max-height:90vh;overflow-y:auto;border-radius:6px;padding:24px;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--ink);">Decor8 API Debug — ${room.roomName}</div>
+      <button onclick="closeLightbox()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;">✕</button>
+    </div>
+    ${content}
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(JSON.stringify(payload,null,2))}).then(()=>showToast('Payload copied','success'))">Copy JSON</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeLightbox()">Close</button>
+    </div>
+  </div>`;
+  lb.classList.remove('hidden');
+}
 
 // ══════════════════════════════════════════
 // OPEN PLAN STRATEGY

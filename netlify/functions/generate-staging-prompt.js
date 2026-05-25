@@ -72,7 +72,7 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
 
 Stage this open-concept living, dining, and kitchen space in ${style} design style using a ${palette} palette.
 
-Create a cohesive, high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected living, dining, and kitchen areas.
+Create a cohesive, high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected living, dining, and kitchen Island Cabinet.
 
 Dining Zone:
 Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.

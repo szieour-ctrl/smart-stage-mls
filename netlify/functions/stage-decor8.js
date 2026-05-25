@@ -78,6 +78,8 @@ async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPr
         color_scheme: colorScheme || "COLOR_SCHEME_9",
       });
 
+  const decor8Payload = JSON.parse(payload);
+  console.log("Decor8 API payload:", JSON.stringify(decor8Payload, null, 2));
   console.log(`Decor8: ${(customPrompt && customPrompt.length > 0) ? `PROMPT mode (${customPrompt.length} chars)` : `ENUM mode room=${roomType} style=${designStyle}`}`);
   const result = await httpsRequest({
     hostname: "api.decor8.ai",
@@ -144,7 +146,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ stagedBase64, width: imageResult.width, height: imageResult.height }),
+      body: JSON.stringify({ stagedBase64, width: imageResult.width, height: imageResult.height, decor8Payload }),
     };
 
   } catch (err) {

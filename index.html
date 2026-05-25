@@ -503,6 +503,7 @@ const SESSION = {
   originals:[],floorplanRoomMap:null,photoRoomMap:{},
   intake:{},rooms:[],anchorRoomId:null,
   stagingDNA: null,        // Extracted from staged Open Plan image
+  anchorImageUrl: null,    // Decor8 URL of the staged Open Plan image — source for DNA two-image reads
   openPlanRoomId: null,    // Room ID of the Open Plan — must be staged first
   openPlanStrategy: 'guided', // 'native' | 'guided' | 'full'
 };
@@ -1315,6 +1316,8 @@ async function stageRoom(roomId, iterNote) {
         stagingDNA: getDNATier(room) === 'full' ? SESSION.stagingDNA : null,
         openPlanZones: room.isOpenPlan ? (room.adjacentRooms.length ? room.adjacentRooms.join(' + ') : room.roomName) : null,
         openPlanStrategy: room.isOpenPlan ? (SESSION.openPlanStrategy || 'guided') : null,
+        anchorImageUrl: (!room.isOpenPlan && SESSION.anchorImageUrl && isOpenPlanDerivedRoom(room.roomName)) ? SESSION.anchorImageUrl : null,
+        derivedZone: (!room.isOpenPlan && SESSION.anchorImageUrl) ? getOpenPlanDerivedZone(room.roomName) : null,
       })
     });
 
@@ -1400,6 +1403,7 @@ async function stageRoom(roomId, iterNote) {
       const dna = await extractStagingDNA(decor8Data.stagedBase64, 'image/jpeg');
       if (dna) {
         SESSION.stagingDNA = dna;
+        SESSION.anchorImageUrl = decor8Data.decor8ImageUrl || null; // Decor8 URL for two-image DNA reads
         room.dnaStatus = 'done';
         showToast(`✓ Design DNA locked — ${dna.overallStyle}`, 'success');
       } else {
@@ -1622,6 +1626,26 @@ function copyDebugPayload() {
 }
 
 // ══════════════════════════════════════════
+// OPEN PLAN DERIVED ROOM ROUTING
+// ══════════════════════════════════════════
+// Rooms that inherit Living Zone DNA from the staged Open Plan anchor image
+const LIVING_ZONE_ROOMS  = ['Living Room','Great Room','Family Room','Living/Great Room'];
+const DINING_ZONE_ROOMS  = ['Dining Room','Dining'];
+const KITCHEN_DNA_ROOMS  = ['Kitchen','Kitchen-Dining'];
+
+function isOpenPlanDerivedRoom(roomName) {
+  return [...LIVING_ZONE_ROOMS, ...DINING_ZONE_ROOMS, ...KITCHEN_DNA_ROOMS]
+    .some(r => roomName?.toLowerCase().includes(r.toLowerCase()));
+}
+
+function getOpenPlanDerivedZone(roomName) {
+  if (LIVING_ZONE_ROOMS.some(r => roomName?.toLowerCase().includes(r.toLowerCase()))) return 'living';
+  if (DINING_ZONE_ROOMS.some(r => roomName?.toLowerCase().includes(r.toLowerCase()))) return 'dining';
+  if (KITCHEN_DNA_ROOMS.some(r => roomName?.toLowerCase().includes(r.toLowerCase()))) return 'kitchen';
+  return null;
+}
+
+// ══════════════════════════════════════════
 // OPEN PLAN STRATEGY
 // ══════════════════════════════════════════
 function setOpenPlanStrategy(strategy) {
@@ -1730,7 +1754,7 @@ function cancelPromptModal() {
 // UTILS
 // ══════════════════════════════════════════
 function showStep(id){['step-upload','step-intake','step-mapping','step-staging'].forEach(s=>document.getElementById(s)?.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden');}
-function resetSession(){SESSION.originals=[];SESSION.intake={};SESSION.rooms=[];SESSION.floorplanRoomMap=null;SESSION.photoRoomMap={};SESSION.anchorRoomId=null;document.getElementById('thumb-grid').innerHTML='';document.getElementById('upload-actions').classList.add('hidden');fileInput.value='';}
+function resetSession(){SESSION.originals=[];SESSION.intake={};SESSION.rooms=[];SESSION.floorplanRoomMap=null;SESSION.photoRoomMap={};SESSION.anchorRoomId=null;SESSION.anchorImageUrl=null;document.getElementById('thumb-grid').innerHTML='';document.getElementById('upload-actions').classList.add('hidden');fileInput.value='';}
 function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');setTimeout(()=>{t.className='';},4000);}
 function esc(s){return(s||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");}
 showStep('step-upload');

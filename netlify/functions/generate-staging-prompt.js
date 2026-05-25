@@ -17,121 +17,94 @@ function httpsRequest(options, body) {
   });
 }
 
+// ── STYLE LABEL MAP ──────────────────────────────────────────────────────────
+const STYLE_LABELS = {
+  'organicmodern':'Organic Modern','transitional':'Transitional','contemporary':'Contemporary',
+  'modern':'Modern','scandinavian':'Scandinavian','minimalist':'Minimalist',
+  'coastal':'Coastal','farmhouse':'Farmhouse','midcenturymodern':'Mid-Century Modern',
+  'industrial':'Industrial','bohemian':'Bohemian','traditional':'Traditional',
+  'japandi':'Japandi','warmminimalist':'Warm Minimalist','luxemodern':'Luxe Modern',
+  'artdeco':'Art Deco','mediterranean':'Mediterranean','rustic':'Rustic',
+  'grandmillennial':'Grand Millennial','wabi_sabi':'Wabi Sabi',
+};
+
+// ── PALETTE COLOR TONE MAP ────────────────────────────────────────────────────
+// Maps palette label → accent color description for style injection sentence
+const PALETTE_TONES = {
+  'Warm Neutrals':    'warm cream, taupe, and honey tones',
+  'Bright Airy':      'soft white, pale sage, and warm wood tones',
+  'Soft Luxury':      'blue, gray, and champagne tones',
+  'Cool Gray':        'cool gray, slate, and white tones',
+  'Earth Tones':      'terracotta, rust, and warm brown tones',
+  'Bold Contrast':    'black, white, and bold accent tones',
+  'Coastal Blue':     'ocean blue, sandy neutral, and white tones',
+  'Sage Green':       'sage green, warm white, and natural wood tones',
+  'Jewel Tones':      'emerald, sapphire, and warm gold tones',
+  'Desert Modern':    'sand, clay, and muted terracotta tones',
+};
+
 // ── OPEN PLAN PROMPT BUILDER ──────────────────────────────────────────────────
-// Claude returns metadata. JS assembles the deterministic prompt.
-// Decor8 receives: short, structured, anchor-based guidance only.
-// No prose. No exact dimensions. No placement coordinates.
-function buildOpenPlanPrompt({ preserveList, designStyle, colorPalette, designDNA, spatialDNA, openPlanStrategy }) {
+// Architecture: Claude Haiku reads photo → returns PRESERVE list + fixture names only
+// JS assembles the final deterministic prompt from Sam's proven formula
+// Anchor hierarchy: Walls → Ceiling Fixtures (chandelier/fan) → Fireplace Wall → Island
+function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy }) {
 
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
 
-  // Find zones with safe defaults — never allow 'none' for living/dining boundary
-  const rawLiving  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'living');
-  const rawDining  = spatialDNA?.zoneRelationships?.find(z => z.zone === 'dining');
-  const rawKitchen = spatialDNA?.zoneRelationships?.find(z => z.zone === 'kitchen');
-
-  const living = {
-    anchor:   rawLiving?.anchor   || 'fireplace',
-    boundary: (rawLiving?.boundary && rawLiving.boundary !== 'none') ? rawLiving.boundary : 'rectangular rug',
-  };
-  const dining = {
-    anchor:   rawDining?.anchor   || 'chandelier',
-    boundary: (rawDining?.boundary && rawDining.boundary !== 'none') ? rawDining.boundary : 'oval rug',
-  };
-  const kitchen = {
-    anchor:   rawKitchen?.anchor  || 'island',
-    boundary: null,
-  };
-
-  const primaryZone   = spatialDNA?.primaryZone   || 'living';
-  const secondaryZone = spatialDNA?.secondaryZone  || 'dining';
-
-  // Style/palette from DNA if available, otherwise from session intake
-  // Convert Decor8 enum strings to readable names for prompt injection
-  const STYLE_LABELS = {
-    'organicmodern':'Organic Modern','transitional':'Transitional','contemporary':'Contemporary',
-    'modern':'Modern','scandinavian':'Scandinavian','minimalist':'Minimalist',
-    'coastal':'Coastal','farmhouse':'Farmhouse','midcenturymodern':'Mid-Century Modern',
-    'industrial':'Industrial','bohemian':'Bohemian','traditional':'Traditional',
-    'japandi':'Japandi','warmminimalist':'Warm Minimalist','luxemodern':'Luxe Modern',
-    'artdeco':'Art Deco','mediterranean':'Mediterranean','rustic':'Rustic',
-    'grandmillennial':'Grand Millennial','wabi_sabi':'Wabi Sabi',
-  };
+  // Resolve style and palette
   const rawStyle = designDNA?.overallStyle || designStyle || 'Organic Modern';
   const style = STYLE_LABELS[rawStyle?.toLowerCase().replace(/[^a-z]/g,'')] || rawStyle;
-  const palette = designDNA?.colorPalette
-    ? (Array.isArray(designDNA.colorPalette) ? designDNA.colorPalette.join(', ') : designDNA.colorPalette)
-    : colorPalette || 'warm neutrals';
-  const wood    = designDNA?.woodTones    || 'natural oak';
-  const metals  = designDNA?.metalFinishes || 'brushed nickel';
+  const palette = colorPalette || 'warm neutrals';
+  const paletteTones = PALETTE_TONES[palette] || `${palette} tones`;
 
-  // Strategy C — full placement control (longer prompt)
-  if (openPlanStrategy === 'full') {
-    return `PRESERVE EXACTLY: ${preserveList}
+  // Ceiling fixture anchors — from Haiku scan or safe defaults
+  const diningAnchor  = chandelier  || 'the chandelier';
+  const livingAnchor2 = ceilingFan  || 'the ceiling fan';
 
-Open-concept great room with connected kitchen, dining, and living areas. Preserve all original architecture, room dimensions, wall placement, windows, cabinetry, appliances, ceiling height, flooring layout, and camera perspective.
+  // Strategies B and C use the same proven formula — C adds the sofa instruction
+  const sofaLine = openPlanStrategy === 'full'
+    ? `Create a dominant living room seating arrangement facing the fireplace with a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
+    : `Create a proportional seating grouping facing the fireplace with accent chairs and a coffee table on the rug.`;
 
-Create cohesive ${style} staging throughout the entire shared space using ${wood}, ${metals}, and a ${palette} palette.
-
-Living room zone: Define the primary seating area around the ${living.anchor} using a large ${living.boundary} and a proportional high-density seating group facing the ${living.anchor}. Maintain realistic circulation around all furniture.
-
-Dining zone: Define the dining area around the ${dining.anchor} using a large ${dining.boundary} centered directly beneath the ${dining.anchor}. Place a dining table with chairs centered on the rug with proper spacing and natural traffic flow.
-
-Kitchen zone: Add proportional counter stools on the far side of the island only — NOT the camera-facing side. Minimal countertop styling — one small plant or bowl, nothing more.
-
-Maintain realistic circulation paths and visual openness between all connected zones. MLS-photorealistic staging only.
-
-Do not alter architecture, room dimensions, cabinetry, flooring layout, windows, walls, ceiling structure, appliances, fireplace dimensions, or camera perspective. Avoid excessive furniture, clutter, distorted geometry, duplicate objects, warped rugs, floating furniture, or fantasy lighting.`;
-  }
-
-  // Strategy B — guided zoning (default, shorter, lighter)
   return `PRESERVE EXACTLY: ${preserveList}
 
-Open-concept great room with connected kitchen, dining, and living spaces. Create cohesive ${style} staging throughout the entire shared space using ${wood}, ${metals}, and a ${palette} palette.
+Stage this open-concept living, dining, and kitchen space in ${style} design style using a ${palette} palette.
 
-Define the living area around the ${living.anchor} using a large ${living.boundary} and proportional seating group.
+Create a cohesive, high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected living, dining, and kitchen areas.
 
-Define the dining area around the ${dining.anchor} using a large ${dining.boundary} with a moderate-density dining arrangement.
+Dining Zone:
+Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.
 
-Kitchen styling should remain light and minimal with proportional counter stools on the far side of the island only.
+Living Zone:
+Place a large rectangular area rug in front of the fireplace wall centered beneath ${livingAnchor2}. ${sofaLine}
 
-Maintain realistic circulation paths and visual openness between all connected zones. MLS-photorealistic staging only.
+Kitchen Island:
+Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.
 
-Do not alter architecture, room dimensions, cabinetry, flooring layout, windows, walls, ceiling structure, appliances, fireplace dimensions, or camera perspective. Avoid excessive furniture, clutter, distorted geometry, duplicate objects, warped rugs, floating furniture, or fantasy lighting.`;
+Use ${style} furniture with clean architectural lines, refined materials, soft layered textures, metallic accents, and balanced upscale styling. Incorporate ${paletteTones} throughout pillows, rugs, artwork, and decor accents while maintaining a cohesive neutral foundation. Maintain open circulation, visual openness, and realistic furniture scale throughout the space. Preserve all architectural features, room dimensions, lighting placement, flooring layout, and camera perspective exactly as photographed.`;
 }
 
-// ── CLAUDE VISION — METADATA EXTRACTION FOR OPEN PLAN ────────────────────────
-// Claude's ONLY job for open plan: classify, detect anchors, build preserve list.
-// Claude does NOT write the final prompt — JS does.
-async function extractOpenPlanMetadata({ imageBase64, mimeType, roomName, claudeKey }) {
-  const prompt = `You are analyzing a real estate listing photo for MLS virtual staging.
-Return ONLY valid JSON — no markdown, no explanation.
+// ── CLAUDE HAIKU — PRESERVE LIST + FIXTURE SCAN ONLY ─────────────────────────
+// Claude's ONLY job: read the photo and return the PRESERVE list + fixture names.
+// Zone anchors, rug shapes, zone order — ALL hardcoded in buildOpenPlanPrompt.
+async function extractOpenPlanMetadata({ imageBase64, mimeType, claudeKey }) {
+  const prompt = `You are scanning a real estate listing photo to extract preservation data for MLS virtual staging.
+Return ONLY valid JSON — no markdown, no explanation, no preamble.
 
-Analyze this photo and return:
+Scan this photo and return:
 
 {
-  "preserveList": "comprehensive comma-separated list of every permanent element visible — exact color and material: cabinetry color/style, countertop material, flooring, fireplace surround color/material, ALL ceiling fixtures by location (chandelier, pendants, ceiling fan), windows, appliances, island geometry and base color, tile, hardware, doors, trim. End with 'DO NOT remove or relocate the kitchen island.' if island is visible.",
-  "zones": [
-    {
-      "zone": "living | dining | kitchen",
-      "anchor": "fireplace | chandelier | island | ceiling fan | window wall",
-      "boundary": "rectangular rug | oval rug | none",
-      "density": "light | medium | high",
-      "visible": true
-    }
-  ],
-  "primaryZone": "living | dining | kitchen",
-  "secondaryZone": "living | dining | kitchen",
-  "trafficFlow": "open_central | perimeter | diagonal",
-  "islandCameraSide": "near (camera-facing, NO stools) | far (away from camera, stool side) | null"
-}
-
-Only include zones that are actually visible in the photo. Order zones by visual prominence.`;
+  "preserveList": "Comprehensive comma-separated list of every permanent architectural element visible. Be specific about exact colors and materials for each item: cabinetry color and door style, countertop material and color, flooring material and color, fireplace surround color and material, ALL ceiling fixtures with location and finish (e.g. 'brushed nickel 5-light chandelier center-right', 'brushed nickel ceiling fan far right'), ALL pendant lights with finish and location, windows with frame color, appliances with finish, island base color and countertop material, backsplash material, all doors and trim color. If kitchen island is visible end with: DO NOT remove or relocate the kitchen island.",
+  "chandelier": "Exact description of the dining chandelier — finish, style, location — e.g. 'the brass 5-light chandelier centered above the dining area'. Use 'the chandelier' if uncertain.",
+  "ceilingFan": "Exact description of the ceiling fan — finish, location — e.g. 'the brushed nickel ceiling fan in the living area'. Use 'the ceiling fan' if uncertain.",
+  "hasFireplace": true,
+  "hasIsland": true
+}`;
 
   const payload = JSON.stringify({
     model: "claude-haiku-4-5",
-    max_tokens: 800,
+    max_tokens: 600,
     messages: [{
       role: "user",
       content: [
@@ -158,7 +131,7 @@ Only include zones that are actually visible in the photo. Order zones by visual
   const text = result.body?.content?.[0]?.text?.trim() || "{}";
   const clean = text.replace(/```json|```/g, "").trim();
   try { return JSON.parse(clean); }
-  catch(e) { return { preserveList: "", zones: [], primaryZone: "living", secondaryZone: "dining" }; }
+  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", hasFireplace: true, hasIsland: true }; }
 }
 
 exports.handler = async (event) => {
@@ -197,23 +170,18 @@ exports.handler = async (event) => {
         return { statusCode: 200, headers, body: JSON.stringify({ prompt: null }) };
       }
 
-      // Strategies B and C: Claude extracts metadata, JS builds the prompt
-      console.log("Open plan: extracting metadata for strategy", openPlanStrategy || 'guided');
-      const metadata = await extractOpenPlanMetadata({ imageBase64, mimeType, roomName, claudeKey });
-
-      const spatialDNA = metadata.zones ? {
-        zoneRelationships: metadata.zones.filter(z => z.visible !== false),
-        primaryZone:   metadata.primaryZone   || 'living',
-        secondaryZone: metadata.secondaryZone || 'dining',
-        trafficFlow:   metadata.trafficFlow   || 'open_central',
-      } : stagingDNA?.spatialDNA || null;
+      // Strategies B and C: Claude scans photo for PRESERVE list + fixture names only
+      // Zone anchors, rug shapes, zone order are ALL hardcoded in buildOpenPlanPrompt
+      console.log("Open plan: scanning photo for PRESERVE list + fixtures, strategy:", openPlanStrategy || 'guided');
+      const metadata = await extractOpenPlanMetadata({ imageBase64, mimeType, claudeKey });
 
       const prompt = buildOpenPlanPrompt({
         preserveList: metadata.preserveList || '',
+        chandelier:   metadata.chandelier   || 'the chandelier',
+        ceilingFan:   metadata.ceilingFan   || 'the ceiling fan',
         designStyle,
         colorPalette,
         designDNA: stagingDNA,
-        spatialDNA,
         openPlanStrategy: openPlanStrategy || 'guided',
       });
 

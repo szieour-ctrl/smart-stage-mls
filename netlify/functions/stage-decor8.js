@@ -96,7 +96,7 @@ async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPr
   if (result.status !== 200) throw new Error(`Decor8 error ${result.status}: ${JSON.stringify(result.body).slice(0, 200)}`);
   const images = result.body?.info?.images;
   if (!images?.length) throw new Error("No images from Decor8: " + JSON.stringify(result.body).slice(0, 300));
-  return images[0];
+  return { image: images[0], decor8Payload };
 }
 
 async function fetchAsBase64(url, hops = 0) {
@@ -136,7 +136,7 @@ exports.handler = async (event) => {
     const imageUrl = await uploadToImgBB(imageBase64, mimeType, imgbbKey);
 
     // Step 2: Call Decor8
-    const imageResult = await callDecor8(imageUrl, roomType, designStyle, colorScheme, customPrompt, decor8Key);
+    const { image: imageResult, decor8Payload } = await callDecor8(imageUrl, roomType, designStyle, colorScheme, customPrompt, decor8Key);
 
     // Step 3: Fetch result as base64
     console.log("Fetching result from:", imageResult.url?.slice(0, 60));

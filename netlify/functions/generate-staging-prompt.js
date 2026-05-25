@@ -65,14 +65,14 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
 
   // Strategies B and C use the same proven formula — C adds the sofa instruction
   const sofaLine = openPlanStrategy === 'full'
-    ? `Create a dominant living room seating arrangement facing the fireplace with a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
-    : `Create a proportional seating grouping facing the fireplace with accent chairs and a coffee table on the rug.`;
+    ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
+    : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
   return `PRESERVE EXACTLY: ${preserveList}
 
 Stage this open-concept living, dining, and kitchen space in ${style} design style using a ${palette} palette.
 
-Create a cohesive, high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected living, dining, and kitchen Island Cabinet.
+Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected living, dining, and FLOATING kitchen Island Cabinet.
 
 Dining Zone:
 Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.
@@ -162,7 +162,7 @@ MLS PRESERVE LAW: The prompt must open with PRESERVE EXACTLY listing every perma
   const userPrompt = derivedZone === 'living' ? `
 IMAGE 1 — Staged Open Plan (anchor):
 Read the LIVING ZONE in this image and inventory every piece Decor8 placed:
-- Primary sofa(s): count, fabric, color, profile, orientation relative to fireplace
+- Primary sofa(s): count, fabric, color, profile
 - Accent chairs: style, fabric, color, position
 - Coffee table: material, shape, size
 - Side tables: material, style
@@ -188,7 +188,7 @@ Stage this living room in ${style} style using a ${palette} palette.
 
 Place a large rectangular [rug color/pattern from Image 1] area rug in front of the fireplace wall centered beneath [ceiling fan from Image 2].
 
-[Primary sofa description from Image 1]: Place [count] [sofa description] facing the fireplace, centered on the rug.
+[Primary sofa description from Image 1]: Place [count] [sofa description] centered on the rug.
 
 [If secondary sofa]: Place one matching sofa [position] creating a conversation group.
 

@@ -58,7 +58,8 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
   const palette = colorPalette || 'warm neutrals';
   const paletteTones = PALETTE_TONES[palette] || `${palette} tones`;
 
-  // Ceiling fixture anchors — from Haiku scan or safe defaults
+  // Ceiling fixture anchors — Haiku provides fixture description (finish/style only,
+  // no location language). Decor8 finds the fixture in the image itself.
   const diningAnchor  = chandelier  || 'the chandelier';
   const livingAnchor2 = ceilingFan  || 'the ceiling fan';
 
@@ -96,8 +97,8 @@ Scan this photo and return:
 
 {
   "preserveList": "Comprehensive comma-separated list of every permanent architectural element visible. Be specific about exact colors and materials for each item: cabinetry color and door style, countertop material and color, flooring material and color, fireplace surround color and material, ALL ceiling fixtures with location and finish (e.g. 'brushed nickel 5-light chandelier center-right', 'brushed nickel ceiling fan far right'), ALL pendant lights with finish and location, windows with frame color, appliances with finish, island base color and countertop material, backsplash material, all doors and trim color. If kitchen island is visible end with: DO NOT remove or relocate the kitchen island.",
-  "chandelier": "Exact description of the dining chandelier — finish, style, location — e.g. 'the brass 5-light chandelier centered above the dining area'. Use 'the chandelier' if uncertain.",
-  "ceilingFan": "Exact description of the ceiling fan — finish, location — e.g. 'the brushed nickel ceiling fan in the living area'. Use 'the ceiling fan' if uncertain.",
+  "chandelier": "Describe ONLY the chandelier fixture itself — finish and style only. Example: 'the brushed nickel 5-light chandelier with clear glass shades'. DO NOT include any location, zone, or spatial reference words such as 'centered', 'above', 'in the living area', 'in the dining area', 'main area'. Fixture description only.",
+  "ceilingFan": "Describe ONLY the ceiling fan fixture itself — finish and style only. Example: 'the brushed nickel ceiling fan'. DO NOT include any location, zone, or spatial reference words. Fixture description only.",
   "hasFireplace": true,
   "hasIsland": true
 }`;

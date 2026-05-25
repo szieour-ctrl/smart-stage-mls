@@ -135,6 +135,174 @@ Scan this photo and return:
   catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", hasFireplace: true, hasIsland: true }; }
 }
 
+// ── DNA-DERIVED SINGLE ROOM PROMPT BUILDER ───────────────────────────────────
+// Two-image Claude Opus call:
+// Image 1: staged Open Plan anchor (Decor8 URL) → inventory Living/Dining zone
+// Image 2: vacant single room photo (base64) → PRESERVE list + room anchors
+// JS assembles final prompt using same anchor hierarchy as Open Plan
+async function buildDNADerivedPrompt({ anchorImageUrl, vacantImageBase64, mimeType, derivedZone, roomName, designStyle, colorPalette, stagingDNA, claudeKey }) {
+
+  const rawStyle = stagingDNA?.overallStyle || designStyle || 'Organic Modern';
+  const style = STYLE_LABELS[rawStyle?.toLowerCase().replace(/[^a-z]/g,'')] || rawStyle;
+  const palette = colorPalette || 'warm neutrals';
+  const paletteTones = PALETTE_TONES[palette] || `${palette} tones`;
+
+  const zoneLabel = derivedZone === 'living' ? 'Living Zone'
+    : derivedZone === 'dining' ? 'Dining Zone'
+    : 'Kitchen';
+
+  const systemPrompt = `You are an expert MLS virtual staging consultant. You will receive two images:
+IMAGE 1: A staged open plan living space — the anchor staging for this home.
+IMAGE 2: A vacant single room from the same home.
+
+Your job is to build a Decor8 virtual staging prompt that recreates the ${zoneLabel} inventory from Image 1 into the vacant room in Image 2, using the same anchor logic.
+
+MLS PRESERVE LAW: The prompt must open with PRESERVE EXACTLY listing every permanent element from Image 2. Never alter architecture.`;
+
+  const userPrompt = derivedZone === 'living' ? `
+IMAGE 1 — Staged Open Plan (anchor):
+Read the LIVING ZONE in this image and inventory every piece Decor8 placed:
+- Primary sofa(s): count, fabric, color, profile, orientation relative to fireplace
+- Accent chairs: style, fabric, color, position
+- Coffee table: material, shape, size
+- Side tables: material, style
+- Lamps: style, shade style
+- Art above mantel: style, size, description
+- Rug: shape, pattern, color, approximate size
+- Pillows/throws: colors, textures
+- Plants/accessories: type, placement
+
+IMAGE 2 — Vacant Living Room:
+Scan and identify:
+- PRESERVE list: every permanent element with exact colors/materials
+- Ceiling fan: finish and description
+- Fireplace: surround color, firebox description
+- Window wall: location and description
+- Any other architectural anchors
+
+BUILD THE DECOR8 PROMPT using this exact structure:
+
+PRESERVE EXACTLY: [comprehensive list from Image 2 scan]
+
+Stage this living room in ${style} style using a ${palette} palette.
+
+Place a large rectangular [rug color/pattern from Image 1] area rug in front of the fireplace wall centered beneath [ceiling fan from Image 2].
+
+[Primary sofa description from Image 1]: Place [count] [sofa description] facing the fireplace, centered on the rug.
+
+[If secondary sofa]: Place one matching sofa [position] creating a conversation group.
+
+[Coffee table from Image 1]: Place [description] centered on the rug between sofa and fireplace.
+
+[Side tables + lamps from Image 1]: Place [description] flanking the sofa.
+
+[Art from Image 1]: Mount [description] centered above the fireplace mantel.
+
+[Accessories from Image 1]: [pillows, throws, plants, vase — exact descriptions].
+
+Use ${style} furniture with clean architectural lines, refined materials, soft layered textures, and balanced upscale styling. Incorporate ${paletteTones} throughout pillows, rugs, artwork, and decor accents. Maintain open circulation and realistic furniture scale. Preserve all architectural features, room dimensions, lighting placement, flooring layout, and camera perspective exactly as photographed.
+
+Return ONLY the final prompt text — no explanation, no preamble.`
+
+  : derivedZone === 'dining' ? `
+IMAGE 1 — Staged Open Plan (anchor):
+Read the DINING ZONE in this image and inventory every piece Decor8 placed:
+- Dining table: material, shape, size, finish
+- Dining chairs: count, style, fabric, color
+- Rug: shape, pattern, color, approximate size
+- Centerpiece: description
+
+IMAGE 2 — Vacant Dining Room:
+Scan and identify:
+- PRESERVE list: every permanent element
+- Chandelier: finish and description
+- Window wall: location
+- Other anchors
+
+BUILD THE DECOR8 PROMPT:
+
+PRESERVE EXACTLY: [from Image 2]
+
+Stage this dining room in ${style} style using a ${palette} palette.
+
+Place a large [rug shape/pattern/color from Image 1] area rug centered beneath [chandelier from Image 2].
+
+Place a [dining table description from Image 1] centered on the rug.
+
+Place [chair count] [chair description from Image 1] around the table — [placement arrangement].
+
+[Centerpiece from Image 1]: [description] on table center.
+
+Use ${style} furniture with refined materials and balanced upscale styling. Incorporate ${paletteTones}. Preserve all architectural features exactly as photographed.
+
+Return ONLY the final prompt text — no explanation, no preamble.`
+
+  : `
+IMAGE 1 — Staged Open Plan (anchor):
+Read the KITCHEN zone and inventory counter accessory styling only:
+- Bar stool style, seat material, frame material
+- Counter accessories: bowls, vases, plants — exact descriptions
+
+IMAGE 2 — Vacant Kitchen:
+Scan and identify:
+- PRESERVE list: every permanent element
+- Island: base color, countertop, which side faces camera
+- Pendant lights: finish and description
+
+BUILD THE DECOR8 PROMPT:
+
+PRESERVE EXACTLY: [from Image 2 — comprehensive list ending with DO NOT remove or relocate the kitchen island]
+
+Stage this kitchen in ${style} style using a ${palette} palette.
+
+Add 3 [bar stool description from Image 1] on the far side of the island only — NOT the camera-facing side.
+
+Counter styling: [accessory descriptions from Image 1]. Keep all other surfaces completely clear.
+
+Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown. Do not remove, relocate, resize, or alter the kitchen island.
+
+Use ${style} styling with ${paletteTones} accents. MLS-photorealistic. Preserve all architectural features exactly as photographed.
+
+Return ONLY the final prompt text — no explanation, no preamble.`;
+
+  const payload = JSON.stringify({
+    model: "claude-opus-4-5",
+    max_tokens: 1500,
+    system: systemPrompt,
+    messages: [{
+      role: "user",
+      content: [
+        { type: "image", source: { type: "url", url: anchorImageUrl } },
+        { type: "image", source: { type: "base64", media_type: mimeType || "image/jpeg", data: vacantImageBase64 } },
+        { type: "text", text: userPrompt }
+      ]
+    }]
+  });
+
+  const result = await httpsRequest({
+    hostname: "api.anthropic.com",
+    path: "/v1/messages",
+    method: "POST",
+    headers: {
+      "x-api-key": claudeKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+      "content-length": Buffer.byteLength(payload)
+    }
+  }, payload);
+
+  if (result.status !== 200) {
+    console.error("DNA-derived prompt error:", JSON.stringify(result.body).slice(0, 200));
+    throw new Error("DNA-derived prompt generation failed");
+  }
+
+  const prompt = result.body?.content?.[0]?.text?.trim();
+  if (!prompt) throw new Error("No DNA-derived prompt returned");
+
+  console.log(`DNA-derived ${derivedZone} prompt: ${prompt.length} chars`);
+  return prompt;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
   const headers = {
@@ -154,6 +322,7 @@ exports.handler = async (event) => {
       shotFocus, adjacentRooms,
       anchorDNA, stagingDNA, dnaTier,
       openPlanStrategy,
+      anchorImageUrl, derivedZone,
     } = JSON.parse(event.body);
 
     const claudeKey = process.env.ANTHROPIC_API_KEY;
@@ -188,6 +357,25 @@ exports.handler = async (event) => {
 
       console.log("Open plan prompt built:", prompt ? `${prompt.length} chars` : "null (native)");
       return { statusCode: 200, headers, body: JSON.stringify({ prompt, metadata }) };
+    }
+
+    // ── DNA-DERIVED SINGLE ROOMS — two-image prompt build ────────────────────
+    // Living Room, Great Room, Dining Room, Kitchen single angles
+    // when Open Plan anchor image is available
+    if (!isOpenPlan && !isIteration && anchorImageUrl && derivedZone) {
+      console.log(`DNA-derived room: ${roomName} zone=${derivedZone} anchorUrl=${anchorImageUrl.slice(0,50)}`);
+      const prompt = await buildDNADerivedPrompt({
+        anchorImageUrl,
+        vacantImageBase64: imageBase64,
+        mimeType,
+        derivedZone,
+        roomName,
+        designStyle,
+        colorPalette,
+        stagingDNA,
+        claudeKey,
+      });
+      return { statusCode: 200, headers, body: JSON.stringify({ prompt }) };
     }
 
     // ── SINGLE ROOM & ITERATION — CLAUDE VISION GENERATES PROSE ──────────────

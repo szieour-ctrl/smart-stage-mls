@@ -218,6 +218,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
       </div>
       <div class="pm-prompt-hint">This is the exact text Claude Vision generated from reading your photo. Edit directly if you see placement errors — your edits go to Decor8, not Claude's version. Every word here influences what Decor8 places and where.</div>
       <div class="pm-warning" id="pm-open-plan-warning" style="display:none;">⚠ <strong>Open Plan detected.</strong> Claude Vision read this as a multi-zone space. Watch for zone crowding — if the prompt places dining furniture AND living furniture in the same area, delete the placement instructions and keep only style/material descriptions. Decor8's native openplan logic handles zone separation better than text instructions.</div>
+      <div class="pm-section-label" style="margin-top:18px;">Decor8 API JSON — Exact Payload Being Sent</div>
+      <pre id="pm-api-payload" style="background:#1a1a1a;color:#e8e8e8;padding:14px;border-radius:3px;font-size:0.74rem;line-height:1.6;overflow-x:auto;white-space:pre-wrap;word-break:break-word;margin:0;"></pre>
+      <div style="font-size:0.68rem;color:var(--muted);margin-top:6px;">These are the exact fields Decor8 receives. <strong>input_image_url</strong> is assigned at upload. If prompt is present, design_style and color_scheme are not sent.</div>
     </div>
     <div class="pm-footer">
       <div class="pm-footer-left" id="pm-cost-note">Approving sends to Decor8 · ~$0.20 · ~45 seconds</div>
@@ -1646,6 +1649,27 @@ function showPromptModal(room, prompt) {
     document.getElementById('pm-cost-note').textContent =
       `Approving sends to Decor8 · ~$0.20 · ~45 sec${dnaNote}`;
 
+    // Build and display the exact Decor8 API payload
+    const roomType = getDecor8RoomType(room.roomName, room.adjacentRooms, room.decor8Type);
+    const hasPrompt = !!(prompt && prompt.length > 0);
+    const previewPayload = hasPrompt
+      ? {
+          input_image_url: "[assigned at ImgBB upload]",
+          room_type: roomType,
+          prompt: "[see prompt above]",
+          num_images: 1,
+          scale_factor: 2,
+        }
+      : {
+          input_image_url: "[assigned at ImgBB upload]",
+          room_type: roomType,
+          design_style: DECOR8_DESIGN_STYLE[i.style_label] || 'organicmodern',
+          num_images: 1,
+          scale_factor: 2,
+          color_scheme: DECOR8_COLOR_SCHEME[i.palette_label] || 'COLOR_SCHEME_9',
+        };
+    document.getElementById('pm-api-payload').textContent = JSON.stringify(previewPayload, null, 2);
+
     document.getElementById('prompt-modal').classList.remove('hidden');
   });
 }
@@ -1657,6 +1681,22 @@ function approvePromptAndStage() {
 }
 
 function clearPromptAndStage() {
+  // Update payload preview to show enum mode (no prompt)
+  const payloadEl = document.getElementById('pm-api-payload');
+  if (payloadEl) {
+    try {
+      const current = JSON.parse(payloadEl.textContent);
+      const enumPayload = {
+        input_image_url: "[assigned at ImgBB upload]",
+        room_type: current.room_type,
+        design_style: current.design_style || 'organicmodern',
+        num_images: 1,
+        scale_factor: 2,
+        color_scheme: current.color_scheme || 'COLOR_SCHEME_9',
+      };
+      payloadEl.textContent = JSON.stringify(enumPayload, null, 2);
+    } catch(e) {}
+  }
   document.getElementById('prompt-modal').classList.add('hidden');
   if (_promptModalResolve) { _promptModalResolve(''); _promptModalResolve = null; }
   showToast('Staging with no custom prompt — Decor8 native intelligence only.', '');

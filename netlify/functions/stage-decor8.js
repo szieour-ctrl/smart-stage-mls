@@ -96,7 +96,7 @@ async function callDecor8(imageUrl, roomType, designStyle, colorScheme, customPr
   if (result.status !== 200) throw new Error(`Decor8 error ${result.status}: ${JSON.stringify(result.body).slice(0, 200)}`);
   const images = result.body?.info?.images;
   if (!images?.length) throw new Error("No images from Decor8: " + JSON.stringify(result.body).slice(0, 300));
-  return { image: images[0], decor8Payload };
+  return { image: images[0], decor8ImageUrl: images[0].url, decor8Payload };
 }
 
 async function fetchAsBase64(url, hops = 0) {
@@ -146,7 +146,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ stagedBase64, width: imageResult.width, height: imageResult.height, decor8Payload }),
+      body: JSON.stringify({ stagedBase64, width: imageResult.width, height: imageResult.height, decor8Payload, decor8ImageUrl: imageResult.url }),
     };
 
   } catch (err) {

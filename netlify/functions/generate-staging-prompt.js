@@ -72,11 +72,11 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
     ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
-  return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, Ceiling Fans, Chandeliers, Pendant Lighting, Fireplaces, Dishwashers, Refrigerators, Ranges or Cooktops.
+  return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, FLOATING kitchen island base cabinet, Ceiling Fans, Chandeliers, Pendant Lighting, Fireplaces, Dishwashers, Refrigerators, Ranges or Cooktops.
 
 Stage this open-concept ${hasKitchen ? 'living, dining, and kitchen' : 'living and dining'} space in ${style} design style using a ${palette} palette.
 
-Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}. ${!hasKitchen ? 'Do not add bar stools, counter stools, or seating of any kind at any counter or cabinet surface.' : ''}
+Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}.
 
 Dining Zone:
 Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.
@@ -85,7 +85,8 @@ Living Zone:
 Place a large rectangular area rug in front of the fireplace wall centered beneath ${livingAnchor2}. ${sofaLine}
 
 ${hasKitchen ? `Kitchen Island:
-Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.` : ''}
+Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.` : `Kitchen Island:
+Do not add bar stools, counter stools, or seating of any kind to the kitchen island. Add one minimal prop only — a small plant or single vase. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.`}
 
 Use ${style} furniture with clean architectural lines, refined materials, soft layered textures, metallic accents, and balanced upscale styling. Incorporate ${paletteTones} throughout pillows, rugs, artwork, and decor accents while maintaining a cohesive neutral foundation. Maintain open circulation, visual openness, and realistic furniture scale throughout the space. Preserve all architectural features, room dimensions, lighting placement, flooring layout, and camera perspective exactly as photographed.`;
 }
@@ -101,7 +102,7 @@ Scan this photo and return:
 
 {
   "preserveList": "Comprehensive comma-separated list of every permanent architectural element visible. Be specific about exact colors and materials for each item: cabinetry color and door style, countertop material and color, flooring material and color, fireplace surround color and material, ALL ceiling fixtures with location and finish (e.g. 'brushed nickel 5-light chandelier center-right', 'brushed nickel ceiling fan far right'), ALL pendant lights with finish and location, windows with frame color, appliances with finish, island base color and countertop material, backsplash material, all doors and trim color. If kitchen island is visible end with: DO NOT remove or relocate the kitchen island.",
-  "chandelier": "Describe ONLY the chandelier fixture itself — finish and style only. Example: 'the brushed nickel 5-light chandelier with clear glass shades'. DO NOT include any location, zone, or spatial reference words such as 'centered', 'above', 'in the living area', 'in the dining area', 'main area'. Fixture description only.",
+  "chandelier": "Identify the DINING chandelier — the decorative ceiling light fixture hanging over the dining/eating area, NOT pendant lights over a kitchen island or countertop. A chandelier hangs over open floor space where a dining table would go. A linear chandelier has multiple lights in a row on a horizontal bar. Describe ONLY its finish and style. Examples: 'the brushed nickel linear chandelier with clear glass shades', 'the gold 6-light round chandelier'. DO NOT include location words. If no chandelier is visible write 'the chandelier'.",
   "ceilingFan": "Describe ONLY the ceiling fan fixture itself — finish and style only. Example: 'the brushed nickel ceiling fan'. DO NOT include any location, zone, or spatial reference words. Fixture description only.",
   "hasFireplace": true,
   "hasIsland": true

@@ -47,7 +47,7 @@ const PALETTE_TONES = {
 // Architecture: Claude Haiku reads photo → returns PRESERVE list + fixture names only
 // JS assembles the final deterministic prompt from Sam's proven formula
 // Anchor hierarchy: Walls → Ceiling Fixtures (chandelier/fan) → Fireplace Wall → Island
-function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy }) {
+function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones }) {
 
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
@@ -58,8 +58,12 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
   const palette = colorPalette || 'warm neutrals';
   const paletteTones = PALETTE_TONES[palette] || `${palette} tones`;
 
-  // Ceiling fixture anchors — Haiku provides fixture description (finish/style only,
-  // no location language). Decor8 finds the fixture in the image itself.
+  // Detect whether kitchen/island is in scope from the room label
+  // "Open Plan: Dining + Great Room" = no kitchen zone, no island, no bar stools
+  const labelLower = (openPlanZones || '').toLowerCase();
+  const hasKitchen = labelLower.includes('kitchen') || labelLower.includes('island');
+
+  // Ceiling fixture anchors
   const diningAnchor  = chandelier  || 'the chandelier';
   const livingAnchor2 = ceilingFan  || 'the ceiling fan';
 
@@ -68,11 +72,11 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
     ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
-  return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, Ceiling Fans, Chandeliers, Pendant Lighting or Fireplaces.
+  return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, Ceiling Fans, Chandeliers, Pendant Lighting, Fireplaces, Dishwashers, Refrigerators, Ranges or Cooktops.
 
-Stage this open-concept living, dining, and kitchen space in ${style} design style using a ${palette} palette.
+Stage this open-concept ${hasKitchen ? 'living, dining, and kitchen' : 'living and dining'} space in ${style} design style using a ${palette} palette.
 
-Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected living, dining, and FLOATING kitchen Island Cabinet.
+Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}. ${!hasKitchen ? 'Do not add any stools.' : ''}
 
 Dining Zone:
 Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.
@@ -80,8 +84,8 @@ Place a large oval area rug centered directly beneath ${diningAnchor}. Place a m
 Living Zone:
 Place a large rectangular area rug in front of the fireplace wall centered beneath ${livingAnchor2}. ${sofaLine}
 
-Kitchen Island:
-Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.
+${hasKitchen ? `Kitchen Island:
+Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.` : ''}
 
 Use ${style} furniture with clean architectural lines, refined materials, soft layered textures, metallic accents, and balanced upscale styling. Incorporate ${paletteTones} throughout pillows, rugs, artwork, and decor accents while maintaining a cohesive neutral foundation. Maintain open circulation, visual openness, and realistic furniture scale throughout the space. Preserve all architectural features, room dimensions, lighting placement, flooring layout, and camera perspective exactly as photographed.`;
 }
@@ -349,6 +353,7 @@ exports.handler = async (event) => {
         preserveList: metadata.preserveList || '',
         chandelier:   metadata.chandelier   || 'the chandelier',
         ceilingFan:   metadata.ceilingFan   || 'the ceiling fan',
+        openPlanZones,
         designStyle,
         colorPalette,
         designDNA: stagingDNA,

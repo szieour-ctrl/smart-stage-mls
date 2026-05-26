@@ -76,7 +76,7 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
 
 Stage this open-concept ${hasKitchen ? 'living, dining, and kitchen' : 'living and dining'} space in ${style} design style using a ${palette} palette.
 
-Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}. ${!hasKitchen ? 'Do not add any stools.' : ''}
+Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}. ${!hasKitchen ? 'Do not add bar stools, counter stools, or seating of any kind at any counter or cabinet surface.' : ''}
 
 Dining Zone:
 Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.

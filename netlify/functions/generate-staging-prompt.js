@@ -52,22 +52,23 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
 
+  // Detect whether kitchen/island is in scope from the room label
+  // "Open Plan: Dining + Great Room" = no kitchen zone, no island, no bar stools
+  const labelLower = (openPlanZones || '').toLowerCase();
+  const hasKitchen = labelLower.includes('kitchen') || labelLower.includes('island');
+
   // Resolve style and palette
   const rawStyle = designDNA?.overallStyle || designStyle || 'Organic Modern';
   const style = STYLE_LABELS[rawStyle?.toLowerCase().replace(/[^a-z]/g,'')] || rawStyle;
   const palette = colorPalette || 'warm neutrals';
   const paletteTones = PALETTE_TONES[palette] || `${palette} tones`;
 
-  // Detect whether kitchen/island is in scope from the room label
-  // "Open Plan: Dining + Great Room" = no kitchen zone, no island, no bar stools
-  const labelLower = (openPlanZones || '').toLowerCase();
-  const hasKitchen = labelLower.includes('kitchen') || labelLower.includes('island');
-
-  // Ceiling fixture anchors
+  // Ceiling fixture anchors — Haiku provides fixture description (finish/style only,
+  // no location language). Decor8 finds the fixture in the image itself.
   const diningAnchor  = chandelier  || 'the chandelier';
   const livingAnchor2 = ceilingFan  || 'the ceiling fan';
 
-  // Strategies B and C use the same proven formula — C adds the sofa instruction
+  // Strategies B and C use the same proven formula — C adds more sofa detail
   const sofaLine = openPlanStrategy === 'full'
     ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
@@ -79,14 +80,13 @@ Stage this open-concept ${hasKitchen ? 'living, dining, and kitchen' : 'living a
 Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}.
 
 Dining Zone:
-Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and kitchen island.
+Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and ${hasKitchen ? 'FLOATING kitchen island cabinet' : 'adjacent spaces'}.
 
 Living Zone:
 Place a large rectangular area rug in front of the fireplace wall centered beneath ${livingAnchor2}. ${sofaLine}
 
 ${hasKitchen ? `Kitchen Island:
-Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.` : `Kitchen Island:
-Do not add bar stools, counter stools, or seating of any kind to the kitchen island. Add one minimal prop only — a small plant or single vase. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.`}
+Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, and appliances exactly as shown.` : ''}
 
 Use ${style} furniture with clean architectural lines, refined materials, soft layered textures, metallic accents, and balanced upscale styling. Incorporate ${paletteTones} throughout pillows, rugs, artwork, and decor accents while maintaining a cohesive neutral foundation. Maintain open circulation, visual openness, and realistic furniture scale throughout the space. Preserve all architectural features, room dimensions, lighting placement, flooring layout, and camera perspective exactly as photographed.`;
 }

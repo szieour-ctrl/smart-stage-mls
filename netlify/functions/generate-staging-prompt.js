@@ -68,7 +68,7 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
     ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
-  return `PRESERVE EXACTLY: ${preserveList}
+  return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, Ceiling Fans, Chandeliers, Pendant Lighting or Fireplaces.
 
 Stage this open-concept living, dining, and kitchen space in ${style} design style using a ${palette} palette.
 

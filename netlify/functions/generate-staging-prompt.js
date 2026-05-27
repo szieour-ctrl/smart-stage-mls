@@ -49,7 +49,7 @@ const PALETTE_TONES = {
 // Anchor hierarchy: Walls → Ceiling Fixtures (chandelier/fan) → Fireplace Wall → Island
 // islandType: "floating" | "peninsula" → stools eligible. "base" | "none" → no stools.
 // islandFixture: "sink" | "cooktop" | "range" | "none" → drives stool anchor language.
-function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones, visibleZones, islandType, islandFixture }) {
+function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones, visibleZones, islandType, islandFixture, stoolCount }) {
 
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
@@ -93,18 +93,21 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
   // Stool anchor — fires only for floating or peninsula
-  // Mat paired with fixture (sink/cooktop/range) — signals work zone to Decor8
-  // Stools anchor to pendant description if present, otherwise to island name
+  // Mat (flat floor object) paired with fixture — signals work zone, displaces throws/towels
+  // Counter props (bowl + plant) occupy surface — displace soft goods like towels
+  // Stool count driven by Haiku island length estimate at 1 per 24", max 5
   const pendantAnchor = (chandelier && chandelier !== 'the chandelier')
     ? `directly below the ${chandelier}`
     : `on the long side of the ${islandNeverMove}`;
 
+  const resolvedStoolCount = (stoolCount && stoolCount > 0) ? stoolCount : 4;
+
   const matLine = (islandFixture && islandFixture !== 'none')
-    ? `Place a 24" x 36" kitchen mat in front of the ${islandFixture}. `
+    ? `Place a 24" x 36" woven kitchen mat laid flat on the floor in front of the ${islandFixture}. `
     : '';
 
   const stoolAnchor = !islandSeatable ? null
-    : `${matLine}Add 3 ${style} counter stools positioned at the countertop overhang on the long side ${pendantAnchor}. Coordinated upholstery with metallic accent legs. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the ${islandNeverMove}.`;
+    : `${matLine}Place a bowl of fruit and a small plant on the island countertop. Add ${resolvedStoolCount} ${style} counter stools positioned at the countertop overhang on the long side ${pendantAnchor}. Coordinated upholstery with metallic accent legs. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the ${islandNeverMove}.`;
 
   // NEVER MOVE list — include island naming only if island present
   const neverMoveIsland = islandNeverMove ? `, ${islandNeverMove}` : '';
@@ -143,7 +146,9 @@ Scan this photo carefully and return:
   "ceilingFan": "Describe the ceiling fan — finish and style ONLY — no location words. If none visible write 'the ceiling fan'.",
   "visibleZones": "Array of zones you can actually identify in this photo based on these identifiers — include ONLY zones you can confirm: kitchen = wall cabinets with appliances OR floating island base cabinet OR range hood OR backsplash; dining = open floor space for a dining table OR hanging chandelier/pendant over open floor; living = sofa-sized open floor space OR fireplace OR ceiling fan in living area OR sliding glass patio door OR French door to exterior OR large window wall with view. Return as array e.g. ['kitchen', 'dining', 'living'] or ['kitchen', 'dining'] or ['dining', 'living'].",
   "islandType": "Classify the kitchen island or counter seating structure. floating = island with all four countertop edges fully visible, not attached to any wall or cabinet run. peninsula = counter seating structure attached to a wall or cabinet run on one side, with three edges visible. base = wall-attached cabinets with no seating overhang. none = no island or peninsula visible. Return exactly one of: 'floating' | 'peninsula' | 'base' | 'none'.",
-  "islandFixture": "If islandType is floating or peninsula, identify any fixed fixture on the island countertop surface: sink, cooktop, or range. Return the fixture name exactly: 'sink' | 'cooktop' | 'range' | 'none'. If islandType is base or none return 'none'."
+  "islandFixture": "If islandType is floating or peninsula, identify any fixed fixture on the island countertop surface: sink, cooktop, or range. Return the fixture name exactly: 'sink' | 'cooktop' | 'range' | 'none'. If islandType is base or none return 'none'.",
+  "islandCountertopLength": "If islandType is floating or peninsula, estimate the total countertop length in inches by identifying visible base cabinet components. Standard widths: sink base = 36 inches, dishwasher = 24 inches, standard base cabinet = 36 inches, narrow base cabinet = 24 inches, finished end panel = 3 inches. Add all visible components to estimate total length. Return as a number (inches). If island is not visible or cannot be estimated return 0.",
+  "stoolCount": "Calculate bar stool count at 1 stool per 24 inches of islandCountertopLength, maximum 5. Example: 96 inches = 4 stools, 72 inches = 3 stools, 48 inches = 2 stools. Return as a number. If islandType is base or none return 0."
 }`;
 
   const payload = JSON.stringify({
@@ -175,7 +180,7 @@ Scan this photo carefully and return:
   const text = result.body?.content?.[0]?.text?.trim() || "{}";
   const clean = text.replace(/```json|```/g, "").trim();
   try { return JSON.parse(clean); }
-  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", visibleZones: ["kitchen","dining","living"], islandType: "floating", islandFixture: "none" }; }
+  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", visibleZones: ["kitchen","dining","living"], islandType: "floating", islandFixture: "none", islandCountertopLength: 96, stoolCount: 4 }; }
 }
 
 // ── DNA-DERIVED SINGLE ROOM PROMPT BUILDER ───────────────────────────────────
@@ -396,6 +401,7 @@ exports.handler = async (event) => {
         visibleZones:     metadata.visibleZones || null,
         islandType:       metadata.islandType   || 'floating',
         islandFixture:    metadata.islandFixture || 'none',
+        stoolCount:       metadata.stoolCount    || 4,
         designStyle,
         colorPalette,
         designDNA: stagingDNA,

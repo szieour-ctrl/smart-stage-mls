@@ -47,15 +47,19 @@ const PALETTE_TONES = {
 // Architecture: Claude Haiku reads photo → returns PRESERVE list + fixture names only
 // JS assembles the final deterministic prompt from Sam's proven formula
 // Anchor hierarchy: Walls → Ceiling Fixtures (chandelier/fan) → Fireplace Wall → Island
-function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones, hasIsland, islandStoolSide }) {
+function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones, visibleZones, islandStoolSide }) {
 
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
 
-  // Detect whether kitchen/island is in scope from the room label
-  // "Open Plan: Dining + Great Room" = no kitchen zone, no island, no bar stools
+  // Zone presence — Haiku visibleZones is the authority, label is the fallback
   const labelLower = (openPlanZones || '').toLowerCase();
-  const hasKitchen = labelLower.includes('kitchen') || labelLower.includes('island');
+  const zones = visibleZones || [];
+
+  const hasKitchen = zones.includes('kitchen') || labelLower.includes('kitchen');
+  const hasDining  = zones.includes('dining')  || true; // dining always present in open plan
+  const hasLiving  = zones.includes('living')  || labelLower.includes('great room') || labelLower.includes('living');
+  const hasIsland  = zones.includes('kitchen') || labelLower.includes('kitchen');
 
   // Resolve style and palette
   const rawStyle = designDNA?.overallStyle || designStyle || 'Organic Modern';
@@ -63,27 +67,33 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
   const palette = colorPalette || 'warm neutrals';
   const paletteTones = PALETTE_TONES[palette] || `${palette} tones`;
 
-  // Ceiling fixture anchors — Haiku provides fixture description (finish/style only,
-  // no location language). Decor8 finds the fixture in the image itself.
-  const diningAnchor  = chandelier  || 'the chandelier';
-  const livingAnchor2 = ceilingFan  || 'the ceiling fan';
+  // Ceiling fixture anchors from Haiku
+  const diningAnchor  = chandelier || 'the chandelier';
+  const livingAnchor2 = ceilingFan || 'the ceiling fan';
 
-  // Strategies B and C use the same proven formula — C adds more sofa detail
+  // Zone description for opening line
+  const zoneDesc = [hasLiving && 'living', hasDining && 'dining', hasKitchen && 'kitchen']
+    .filter(Boolean).join(', ');
+  const islandDesc = hasKitchen ? 'FLOATING kitchen Island Cabinet' : null;
+  const circulationDesc = [hasLiving && 'living', hasDining && 'dining', islandDesc]
+    .filter(Boolean).join(', and ');
+
+  // Sofa line
   const sofaLine = openPlanStrategy === 'full'
     ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
   return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, FLOATING kitchen island base cabinet, Ceiling Fans, Chandeliers, Pendant Lighting, Fireplaces, Dishwashers, Refrigerators, Ranges or Cooktops. Large multi-pane sliding glass patio door — DO NOT replace with any other door type, DO NOT cover with furniture or art, DO NOT convert to a solid wall or French door. The exterior view through this door must remain visible.
 
-Stage this open-concept ${hasKitchen ? 'living, dining, and kitchen' : 'living and dining'} space in ${style} design style using a ${palette} palette.
+Stage this open-concept ${zoneDesc} space in ${style} design style using a ${palette} palette.
 
-Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}.
+Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${circulationDesc}.
 
-Dining Zone:
-Place a large oval area rug somewhat centered under ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and ${hasKitchen ? 'FLOATING kitchen island cabinet' : 'adjacent spaces'}.
+${hasDining ? `Dining Zone:
+Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and ${hasKitchen ? 'FLOATING kitchen island cabinet' : 'adjacent spaces'}.` : ''}
 
-Living Zone:
-Place a large rectangular area rug in front of the fireplace wall somewhat centered beneath ${livingAnchor2}. ${sofaLine}
+${hasLiving ? `Living Zone:
+Place a large rectangular area rug in front of the ${hasLiving ? 'feature wall' : 'back wall'} centered beneath ${livingAnchor2}. ${sofaLine}` : ''}
 
 ${hasKitchen
   ? (islandStoolSide === 'none'
@@ -105,15 +115,14 @@ async function extractOpenPlanMetadata({ imageBase64, mimeType, claudeKey }) {
   const prompt = `You are scanning a real estate listing photo to extract preservation data for MLS virtual staging.
 Return ONLY valid JSON — no markdown, no explanation, no preamble.
 
-Scan this photo and return:
+Scan this photo carefully and return:
 
 {
-  "preserveList": "Comprehensive comma-separated list of every permanent architectural element visible. Be specific about exact colors and materials for each item: cabinetry color and door style, countertop material and color, flooring material and color, fireplace surround color and material, ALL ceiling fixtures with location and finish (e.g. 'brushed nickel 5-light chandelier center-right', 'brushed nickel ceiling fan far right'), ALL pendant lights with finish and location, windows with frame color, appliances with finish, island base color and countertop material, backsplash material, all doors and trim color. If kitchen island is visible end with: DO NOT remove or relocate the kitchen island.",
-  "chandelier": "Identify the DINING chandelier — the decorative ceiling light fixture hanging over the dining/eating area, NOT pendant lights over a kitchen island or countertop. A chandelier hangs over open floor space where a dining table would go. A linear chandelier has multiple lights in a row on a horizontal bar. Describe ONLY its finish and style. Examples: 'the brushed nickel linear chandelier with clear glass shades', 'the gold 6-light round chandelier'. DO NOT include location words. If no chandelier is visible write 'the chandelier'.",
-  "ceilingFan": "Describe ONLY the ceiling fan fixture itself — finish and style only. Example: 'the brushed nickel ceiling fan'. DO NOT include any location, zone, or spatial reference words. Fixture description only.",
-  "hasFireplace": true,
-  "hasIsland": true,
-  "islandStoolSide": "Evaluate spatial clearance for bar stools. Look at the space BEHIND the island (far side from camera). Is there clear open floor space for stools to sit between the island and any adjacent furniture, walls, or dining zone? Return: 'far' if clear floor space exists behind the island for stools, 'none' if a dining table, chairs, or wall immediately occupies that space with no stool clearance. Default to 'far' if uncertain."
+  "preserveList": "Comprehensive comma-separated list of every permanent architectural element visible. Be specific: cabinetry color and door style, countertop material and color, flooring material and color, ALL ceiling fixtures with finish (chandelier, ceiling fan, pendants), windows and door types with frame color, appliances with finish, island base color and countertop, backsplash, all entry doors and trim. If kitchen island is visible end with: DO NOT remove or relocate the kitchen island.",
+  "chandelier": "Identify the dining zone chandelier — a decorative ceiling fixture hanging over open floor space where a dining table would go. A linear chandelier has multiple lights on a horizontal bar. Describe finish and style ONLY — no location words. If none visible write 'the chandelier'.",
+  "ceilingFan": "Describe the ceiling fan — finish and style ONLY — no location words. If none visible write 'the ceiling fan'.",
+  "visibleZones": "Array of zones you can actually identify in this photo based on these identifiers — include ONLY zones you can confirm: kitchen = wall cabinets with appliances OR floating island base cabinet OR range hood OR backsplash; dining = open floor space for a dining table OR hanging chandelier/pendant over open floor; living = sofa-sized open floor space OR fireplace OR ceiling fan in living area OR sliding glass patio door OR French door to exterior OR large window wall with view. Return as array e.g. ['kitchen', 'dining', 'living'] or ['kitchen', 'dining'] or ['dining', 'living'].",
+  "islandStoolSide": "Evaluate spatial clearance for bar stools on the FAR side of the island (away from camera). Return 'far' if clear open floor space exists behind the island. Return 'none' if a dining table, wall, or other obstruction immediately occupies that space. Default 'far' if uncertain."
 }`;
 
   const payload = JSON.stringify({
@@ -145,7 +154,7 @@ Scan this photo and return:
   const text = result.body?.content?.[0]?.text?.trim() || "{}";
   const clean = text.replace(/```json|```/g, "").trim();
   try { return JSON.parse(clean); }
-  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", hasFireplace: true, hasIsland: true, islandStoolSide: "far" }; }
+  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", visibleZones: ["kitchen","dining","living"], islandStoolSide: "far" }; }
 }
 
 // ── DNA-DERIVED SINGLE ROOM PROMPT BUILDER ───────────────────────────────────
@@ -359,12 +368,12 @@ exports.handler = async (event) => {
       const metadata = await extractOpenPlanMetadata({ imageBase64, mimeType, claudeKey });
 
       const prompt = buildOpenPlanPrompt({
-        preserveList: metadata.preserveList || '',
-        chandelier:   metadata.chandelier   || 'the chandelier',
-        ceilingFan:   metadata.ceilingFan   || 'the ceiling fan',
+        preserveList:    metadata.preserveList || '',
+        chandelier:      metadata.chandelier   || 'the chandelier',
+        ceilingFan:      metadata.ceilingFan   || 'the ceiling fan',
         openPlanZones,
-        hasIsland:        metadata.hasIsland !== false,
-        islandStoolSide:  metadata.islandStoolSide || 'far',
+        visibleZones:    metadata.visibleZones || null,
+        islandStoolSide: metadata.islandStoolSide || 'far',
         designStyle,
         colorPalette,
         designDNA: stagingDNA,

@@ -43,11 +43,46 @@ const PALETTE_TONES = {
   'Desert Modern':    'sand, clay, and muted terracotta tones',
 };
 
+// ── STOOL SIDE RESOLVER ───────────────────────────────────────────────────────
+// Uses islandOverhang (surface geometry read) as primary signal.
+// Falls back to legacy islandStoolSide (floor space read) if overhang data missing.
+// Decision: stools fire ONLY when far-side overhang is seating-depth AND fixture-free.
+function resolveStoolSide(islandOverhang, islandStoolSide) {
+  if (!islandOverhang) {
+    // Legacy fallback — floor space read only
+    return islandStoolSide === 'far' ? 'far' : 'none';
+  }
+  const far  = islandOverhang.farSide;
+  const near = islandOverhang.nearSide;
+  if (far?.overhang && far?.fixture === 'none') return 'far';
+  // Far side blocked by fixture or no overhang → suppress
+  return 'none';
+}
+
+// ── STOOL BLOCK BUILDER ───────────────────────────────────────────────────────
+// Generates the Kitchen Island stool instruction using surface anchor language.
+// nearSide fixture name is injected into the explicit negative to block Decor8
+// from defaulting to the traffic lane / camera-facing side.
+function buildStoolBlock(stoolSide, islandOverhang, style) {
+  if (stoolSide === 'none') {
+    return `Kitchen Island:
+Add one minimal prop only on the island countertop — a small plant or single vase. No stools of any kind. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, dishwasher, and all appliances exactly as shown.`;
+  }
+
+  const nearFixture = islandOverhang?.nearSide?.fixture;
+  const fixtureWarning = (nearFixture && nearFixture !== 'none')
+    ? `The near side of the island contains a ${nearFixture} — do NOT place stools on that side.`
+    : `Do NOT place stools on the camera-facing side or in the traffic lane between the island and perimeter cabinets.`;
+
+  return `Kitchen Island:
+Add 3 ${style} counter stools positioned at the countertop overhang on the far side of the island — the side facing the dining table, with no sink or cooktop on that surface. Coordinated upholstery with metallic accent legs. ${fixtureWarning} Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, dishwasher, and all appliances exactly as shown.`;
+}
+
 // ── OPEN PLAN PROMPT BUILDER ──────────────────────────────────────────────────
 // Architecture: Claude Haiku reads photo → returns PRESERVE list + fixture names only
 // JS assembles the final deterministic prompt from Sam's proven formula
 // Anchor hierarchy: Walls → Ceiling Fixtures (chandelier/fan) → Fireplace Wall → Island
-function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones, visibleZones, islandStoolSide }) {
+function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle, colorPalette, designDNA, openPlanStrategy, openPlanZones, visibleZones, islandStoolSide, islandOverhang }) {
 
   // Strategy A — pure native Decor8, no custom prompt
   if (openPlanStrategy === 'native') return null;
@@ -83,6 +118,9 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
     ? `Place a proportional sofa grouping, accent chairs, coffee table, and layered decor on the rug.`
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
+  // Resolve stool side using overhang geometry (primary) or floor space (fallback)
+  const stoolSide = resolveStoolSide(islandOverhang, islandStoolSide);
+
   return `PRESERVE EXACTLY: ${preserveList} NEVER MOVE, DELETE or REPLACE the following: Walls, Windows, FLOATING kitchen island base cabinet, Ceiling Fans, Chandeliers, Pendant Lighting, Fireplaces, Dishwashers, Refrigerators, Ranges or Cooktops. Large multi-pane sliding glass patio door — DO NOT replace with any other door type, DO NOT cover with furniture or art, DO NOT convert to a solid wall or French door. The exterior view through this door must remain visible.
 
 Stage this open-concept ${zoneDesc} space in ${style} design style using a ${palette} palette.
@@ -95,15 +133,7 @@ Place a large oval area rug centered directly beneath ${diningAnchor}. Place a m
 ${hasLiving ? `Living Zone:
 Place a large rectangular area rug in front of the ${hasLiving ? 'feature wall' : 'back wall'} centered beneath ${livingAnchor2}. ${sofaLine}` : ''}
 
-${hasKitchen
-  ? (islandStoolSide === 'none'
-    ? `Kitchen Island:
-Add one minimal prop only on the island countertop — a small plant or single vase. No stools of any kind. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, dishwasher, and all appliances exactly as shown.`
-    : `Kitchen Island:
-Add 3 ${style} counter stools at the island with coordinated upholstery and metallic accents on the far side of the island only — NOT the camera-facing side. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, cabinetry, countertops, backsplash, dishwasher, and all appliances exactly as shown.`)
-  : hasIsland ? `Kitchen Island:
-Add one minimal prop only on the island countertop — a small plant or single vase. No stools of any kind. Do not remove, relocate, resize, or alter the kitchen island. Preserve the kitchen island, dishwasher, and all appliances exactly as shown.`
-  : ''}
+${(hasKitchen || hasIsland) ? buildStoolBlock(stoolSide, islandOverhang, style) : ''}
 
 Use ${style} furniture with clean architectural lines, refined materials, soft layered textures, metallic accents, and balanced upscale styling. Incorporate ${paletteTones} throughout pillows, rugs, artwork, and decor accents while maintaining a cohesive neutral foundation. Maintain open circulation, visual openness, and realistic furniture scale throughout the space. Preserve all architectural features, room dimensions, lighting placement, flooring layout, and camera perspective exactly as photographed.`;
 }
@@ -122,12 +152,13 @@ Scan this photo carefully and return:
   "chandelier": "Identify the dining zone chandelier — a decorative ceiling fixture hanging over open floor space where a dining table would go. A linear chandelier has multiple lights on a horizontal bar. Describe finish and style ONLY — no location words. If none visible write 'the chandelier'.",
   "ceilingFan": "Describe the ceiling fan — finish and style ONLY — no location words. If none visible write 'the ceiling fan'.",
   "visibleZones": "Array of zones you can actually identify in this photo based on these identifiers — include ONLY zones you can confirm: kitchen = wall cabinets with appliances OR floating island base cabinet OR range hood OR backsplash; dining = open floor space for a dining table OR hanging chandelier/pendant over open floor; living = sofa-sized open floor space OR fireplace OR ceiling fan in living area OR sliding glass patio door OR French door to exterior OR large window wall with view. Return as array e.g. ['kitchen', 'dining', 'living'] or ['kitchen', 'dining'] or ['dining', 'living'].",
-  "islandStoolSide": "Evaluate spatial clearance for bar stools on the FAR side of the island (away from camera). Return 'far' if clear open floor space exists behind the island. Return 'none' if a dining table, wall, or other obstruction immediately occupies that space. Default 'far' if uncertain."
+  "islandStoolSide": "Evaluate spatial clearance for bar stools on the FAR side of the island (away from camera). Return 'far' if clear open floor space exists behind the island. Return 'none' if a dining table, wall, or other obstruction immediately occupies that space. Default 'far' if uncertain.",
+  "islandOverhang": "Evaluate the kitchen island countertop overhang on each side. A seating overhang is a countertop edge that extends 10–14 inches or more beyond the base cabinet face, with open floor clearance below for stool legs. A decorative overhang is less than 6 inches — not seatable. For each side: nearSide = the island edge closest to the camera. farSide = the island edge furthest from the camera, facing the dining or living zone. For each side identify: (1) whether a seating-depth overhang is present, (2) whether a fixed fixture occupies that surface edge (sink, cooktop, or range — name it if present). Return as: { nearSide: { overhang: true/false, fixture: 'sink'|'cooktop'|'range'|'none' }, farSide: { overhang: true/false, fixture: 'sink'|'cooktop'|'range'|'none' } }. If no island is visible return null."
 }`;
 
   const payload = JSON.stringify({
     model: "claude-haiku-4-5",
-    max_tokens: 600,
+    max_tokens: 800,
     messages: [{
       role: "user",
       content: [
@@ -154,7 +185,7 @@ Scan this photo carefully and return:
   const text = result.body?.content?.[0]?.text?.trim() || "{}";
   const clean = text.replace(/```json|```/g, "").trim();
   try { return JSON.parse(clean); }
-  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", visibleZones: ["kitchen","dining","living"], islandStoolSide: "far" }; }
+  catch(e) { return { preserveList: "", chandelier: "the chandelier", ceilingFan: "the ceiling fan", visibleZones: ["kitchen","dining","living"], islandStoolSide: "far", islandOverhang: null }; }
 }
 
 // ── DNA-DERIVED SINGLE ROOM PROMPT BUILDER ───────────────────────────────────
@@ -374,6 +405,7 @@ exports.handler = async (event) => {
         openPlanZones,
         visibleZones:    metadata.visibleZones || null,
         islandStoolSide: metadata.islandStoolSide || 'far',
+        islandOverhang:  metadata.islandOverhang  || null,
         designStyle,
         colorPalette,
         designDNA: stagingDNA,

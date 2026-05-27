@@ -80,10 +80,10 @@ Stage this open-concept ${hasKitchen ? 'living, dining, and kitchen' : 'living a
 Stage with a high-end, airy look with balanced zone separation, intentional negative space, and open circulation throughout the connected ${hasKitchen ? 'living, dining, and FLOATING kitchen Island Cabinet' : 'living and dining areas'}.
 
 Dining Zone:
-Place a large oval area rug centered directly beneath ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and ${hasKitchen ? 'FLOATING kitchen island cabinet' : 'adjacent spaces'}.
+Place a large oval area rug somewhat centered under ${diningAnchor}. Place a modern dining table with 6 chairs centered on the rug defining the dining zone. Keep clear circulation between the dining area and ${hasKitchen ? 'FLOATING kitchen island cabinet' : 'adjacent spaces'}.
 
 Living Zone:
-Place a large rectangular area rug in front of the fireplace wall centered beneath ${livingAnchor2}. ${sofaLine}
+Place a large rectangular area rug in front of the fireplace wall somewhat centered beneath ${livingAnchor2}. ${sofaLine}
 
 ${hasKitchen
   ? (islandStoolSide === 'none'

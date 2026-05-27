@@ -93,11 +93,18 @@ function buildOpenPlanPrompt({ preserveList, chandelier, ceilingFan, designStyle
     : `Place a proportional sofa grouping with accent chairs and a coffee table on the rug.`;
 
   // Stool anchor — fires only for floating or peninsula
-  // Anchor is the countertop overhang on the long far side of the fixture (or pendants if no fixture)
+  // Mat paired with fixture (sink/cooktop/range) — signals work zone to Decor8
+  // Stools anchor to pendant description if present, otherwise to island name
+  const pendantAnchor = (chandelier && chandelier !== 'the chandelier')
+    ? `directly below the ${chandelier}`
+    : `on the long side of the ${islandNeverMove}`;
+
+  const matLine = (islandFixture && islandFixture !== 'none')
+    ? `Place a 24" x 36" kitchen mat in front of the ${islandFixture}. `
+    : '';
+
   const stoolAnchor = !islandSeatable ? null
-    : (islandFixture && islandFixture !== 'none')
-      ? `Add 3 ${style} counter stools positioned at the countertop overhang on the long far side of the ${islandFixture}. Coordinated upholstery with metallic accent legs. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the ${islandNeverMove}.`
-      : `Add 3 ${style} counter stools positioned at the countertop overhang on the long far side below the pendant lights. Coordinated upholstery with metallic accent legs. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the ${islandNeverMove}.`;
+    : `${matLine}Add 3 ${style} counter stools positioned at the countertop overhang on the long side ${pendantAnchor}. Coordinated upholstery with metallic accent legs. Keep kitchen styling light and minimal. Do not remove, relocate, resize, or alter the ${islandNeverMove}.`;
 
   // NEVER MOVE list — include island naming only if island present
   const neverMoveIsland = islandNeverMove ? `, ${islandNeverMove}` : '';

@@ -312,6 +312,7 @@ const ROOM_OPTIONS = [
 
   "── OPEN PLAN (Multi-Zone) ────── || __fp__",
   "Open Plan: Kitchen + Dining + Great Room || openplan",
+  "Open Plan: Kitchen + Dining || openplan",
   "Open Plan: Kitchen + Great Room || openplan",
   "Open Plan: Dining + Great Room || openplan",
   "Open Plan: Kitchen + Living Room || openplan",
@@ -375,6 +376,7 @@ function parseRoomOption(val) {
 // ── Open plan zone descriptions for Claude prompt ─────────────────────────────
 function getOpenPlanZones(label) {
   if (label.includes('Kitchen + Dining + Great Room')) return 'Three zones: (1) Kitchen zone — island with sink/appliances, bar seating on FAR side from camera; (2) Dining zone — rectangular table under chandelier/pendant fixture, 6-8 chairs; (3) Great Room/Living zone — sofa facing fireplace, accent chair, coffee table, area rug';
+  if (label.includes('Kitchen + Dining') && !label.includes('Great Room')) return 'Two zones: (1) Kitchen zone — island with sink/appliances, bar seating on FAR side from camera; (2) Dining zone — rectangular table under chandelier/pendant fixture, 6-8 chairs. No living/great room zone.';
   if (label.includes('Kitchen + Great Room')) return 'Two zones: (1) Kitchen zone — island with appliances, bar seating on far side from camera; (2) Great Room zone — sofa facing fireplace or feature wall, accent chair, coffee table, area rug';
   if (label.includes('Dining + Great Room')) return 'Two zones: (1) Dining zone — rectangular table under chandelier, 6 chairs; (2) Great Room zone — sofa facing fireplace, accent chair, coffee table, area rug';
   if (label.includes('Kitchen + Living Room')) return 'Two zones: (1) Kitchen zone — island with appliances, bar seating on far side; (2) Living zone — sofa arrangement facing focal wall, coffee table, area rug';
@@ -1761,4 +1763,3 @@ showStep('step-upload');
 </script>
 </body>
 </html>
-

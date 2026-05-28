@@ -23,6 +23,9 @@
 [functions."stage-decor8"]
   timeout = 26
 
+[functions."stage-openai"]
+  timeout = 26
+
 [functions."extract-staging-dna"]
   timeout = 15
 

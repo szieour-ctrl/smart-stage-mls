@@ -11,16 +11,20 @@ async function getResult(jobId, token, siteId) {
       method: "GET",
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
     }, (res) => {
+      console.log(`Blob GET status: ${res.statusCode} for key: job-${jobId}`);
       if (res.statusCode === 404) { resolve(null); return; }
       // Handle redirect
       if (res.statusCode === 301 || res.statusCode === 302) {
         const loc = res.headers.location;
+        console.log(`Blob redirect to: ${loc?.slice(0,60)}`);
         https.request(new URL(loc), (res2) => {
           const chunks = [];
           res2.on("data", c => chunks.push(c));
           res2.on("end", () => {
-            try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8"))); }
-            catch(e) { resolve(null); }
+            const raw = Buffer.concat(chunks).toString("utf8");
+            console.log(`Blob redirect body size: ${raw.length} chars`);
+            try { resolve(JSON.parse(raw)); }
+            catch(e) { console.error("Blob parse error:", e.message); resolve(null); }
           });
         }).on("error", reject).end();
         return;
@@ -28,8 +32,10 @@ async function getResult(jobId, token, siteId) {
       const chunks = [];
       res.on("data", c => chunks.push(c));
       res.on("end", () => {
-        try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8"))); }
-        catch(e) { resolve(null); }
+        const raw = Buffer.concat(chunks).toString("utf8");
+        console.log(`Blob direct body size: ${raw.length} chars`);
+        try { resolve(JSON.parse(raw)); }
+        catch(e) { console.error("Blob parse error:", e.message); resolve(null); }
       });
     });
     req.on("error", reject);
@@ -45,6 +51,9 @@ exports.handler = async (event) => {
 
   const token = process.env.NETLIFY_ACCESS_TOKEN;
   const siteId = process.env.NETLIFY_SITE_ID;
+
+  console.log(`check-decor8: jobId=${jobId} siteId=${siteId ? siteId.slice(0,8)+'...' : 'MISSING'} token=${token ? 'present' : 'MISSING'}`);
+
   if (!token || !siteId) return { statusCode: 500, headers, body: JSON.stringify({ error: "Storage not configured" }) };
 
   try {
@@ -52,6 +61,7 @@ exports.handler = async (event) => {
     if (!result) return { statusCode: 200, headers, body: JSON.stringify({ status: "pending" }) };
     return { statusCode: 200, headers, body: JSON.stringify(result) };
   } catch (err) {
+    console.error("check-decor8 error:", err.message);
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };

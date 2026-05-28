@@ -1342,47 +1342,55 @@ async function stageRoom(roomId, iterNote) {
     }
     const finalPrompt = approvedPrompt; // may be edited text or '' for no-prompt mode
 
-    // Step 2: Call OpenAI gpt-image-1 — auto-retry up to 3x on timeout
-    room.promptStatus = 'Staging with OpenAI — takes ~60 seconds...';
+    // Step 2: Dispatch to OpenAI background job — returns jobId immediately
+    room.promptStatus = 'Sending to OpenAI — starting job...';
+    renderRoomQueue();
+
+    const dispatchRes = await fetch('/.netlify/functions/stage-openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: sourceBase64,
+        mimeType: sourceMime,
+        customPrompt: finalPrompt || '',
+      })
+    });
+    if (!dispatchRes.ok) {
+      const d = await dispatchRes.json().catch(() => ({}));
+      throw new Error('OpenAI job dispatch failed: ' + (d.error || dispatchRes.status));
+    }
+    const { jobId } = await dispatchRes.json();
+    if (!jobId) throw new Error('No jobId returned from stage-openai');
+
+    // Step 3: Poll check-decor8 every 4 seconds — up to 150 seconds total
+    room.promptStatus = 'OpenAI staging in progress — takes ~60–90 seconds...';
     renderRoomQueue();
 
     let decor8Data = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    const maxPolls = 38; // 38 × 4s = 152 seconds max
+    for (let poll = 0; poll < maxPolls; poll++) {
+      await new Promise(r => setTimeout(r, 4000));
       try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 120000); // 120s client timeout — OpenAI slower than Decor8
-        const decor8Res = await fetch('/.netlify/functions/stage-openai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({
-            imageBase64: sourceBase64,
-            mimeType: sourceMime,
-            customPrompt: finalPrompt || '',
-          })
-        });
-        clearTimeout(timer);
-        if (!decor8Res.ok) {
-          const d = await decor8Res.json().catch(() => ({}));
-          if (attempt < 3) { room.promptStatus = `Retrying OpenAI (attempt ${attempt+1}/3)...`; renderRoomQueue(); continue; }
-          throw new Error('OpenAI staging failed: ' + (d.error || decor8Res.status));
+        const checkRes = await fetch(`/.netlify/functions/check-decor8?jobId=${encodeURIComponent(jobId)}`);
+        if (!checkRes.ok) continue;
+        const checkData = await checkRes.json();
+        if (checkData.status === 'done' && checkData.stagedBase64) {
+          decor8Data = checkData;
+          break;
         }
-        decor8Data = await decor8Res.json();
-        if (!decor8Data.stagedBase64) {
-          if (attempt < 3) { room.promptStatus = `Retrying (attempt ${attempt+1}/3)...`; renderRoomQueue(); continue; }
-          throw new Error('No staged image returned');
+        if (checkData.status === 'error') {
+          throw new Error('OpenAI staging failed: ' + (checkData.error || 'unknown error'));
         }
-        break; // success
-      } catch(err) {
-        if (err.name === 'AbortError' && attempt < 3) {
-          room.promptStatus = `OpenAI timeout — retrying (${attempt+1}/3)...`;
-          renderRoomQueue();
-          continue;
-        }
-        throw err;
+        // status === 'pending' — keep polling
+        const elapsed = (poll + 1) * 4;
+        room.promptStatus = `OpenAI staging in progress — ${elapsed}s elapsed...`;
+        renderRoomQueue();
+      } catch(pollErr) {
+        if (pollErr.message.startsWith('OpenAI staging failed')) throw pollErr;
+        // Network blip — continue polling
       }
     }
-    if (!decor8Data?.stagedBase64) throw new Error('OpenAI staging failed after 3 attempts');
+    if (!decor8Data?.stagedBase64) throw new Error('OpenAI staging timed out after 150 seconds');
 
     room.stagedBase64 = decor8Data.stagedBase64;
     room.lastDecor8Payload = decor8Data.decor8Payload || null; // store for debug display

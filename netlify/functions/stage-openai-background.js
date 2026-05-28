@@ -1,14 +1,9 @@
 // stage-openai-background.js — Netlify Background Function
-// Runs up to 15 minutes — no timeout wall
-// Pattern mirrors stage-decor8-background.js exactly:
-//   1. Call OpenAI gpt-image-1
-//   2. Upload result to ImgBB (small URL stored in blob, not 2.5MB base64)
-//   3. Store { status: "done", stagedBase64 } in Netlify Blobs
-//   4. Client polls check-decor8 for result
+// Uses @netlify/blobs SDK for reliable blob storage
 
 const https = require("https");
+const { getStore } = require("@netlify/blobs");
 
-// ── MULTIPART BUILDER ─────────────────────────────────────────────────────────
 function buildOpenAIMultipart(imageBuffer, imageMime, prompt) {
   const boundary = "----OAIBoundary" + Math.random().toString(36).slice(2);
   const parts = [];
@@ -23,15 +18,13 @@ function buildOpenAIMultipart(imageBuffer, imageMime, prompt) {
     "utf8"
   );
   const closing = Buffer.from(`\r\n--${boundary}--\r\n`, "utf8");
-  const body = Buffer.concat([textBuf, fileHdr, imageBuffer, closing]);
-  return { body, boundary };
+  return { body: Buffer.concat([textBuf, fileHdr, imageBuffer, closing]), boundary };
 }
 
-// ── OPENAI CALL ───────────────────────────────────────────────────────────────
 async function callOpenAI(imageBase64, mimeType, prompt, apiKey) {
   const imageBuffer = Buffer.from(imageBase64, "base64");
   const { body, boundary } = buildOpenAIMultipart(imageBuffer, mimeType || "image/jpeg", prompt);
-  console.log(`OpenAI gpt-image-1: prompt ${prompt.length} chars, image ${Math.round(imageBuffer.length/1024)}KB`);
+  console.log(`OpenAI: prompt ${prompt.length} chars, image ${Math.round(imageBuffer.length/1024)}KB`);
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: "api.openai.com",
@@ -46,12 +39,11 @@ async function callOpenAI(imageBase64, mimeType, prompt, apiKey) {
       const chunks = [];
       res.on("data", c => chunks.push(c));
       res.on("end", () => {
-        const raw = Buffer.concat(chunks).toString("utf8");
         try {
-          const parsed = JSON.parse(raw);
+          const parsed = JSON.parse(Buffer.concat(chunks).toString("utf8"));
           if (res.statusCode !== 200) reject(new Error(`OpenAI error ${res.statusCode}: ${JSON.stringify(parsed).slice(0,300)}`));
           else resolve(parsed);
-        } catch(e) { reject(new Error(`OpenAI parse error: ${raw.slice(0,200)}`)); }
+        } catch(e) { reject(new Error(`OpenAI parse error`)); }
       });
     });
     req.on("error", reject);
@@ -60,23 +52,18 @@ async function callOpenAI(imageBase64, mimeType, prompt, apiKey) {
   });
 }
 
-// ── IMGBB UPLOAD ──────────────────────────────────────────────────────────────
 async function uploadToImgBB(imageBase64, apiKey) {
   const imageBuffer = Buffer.from(imageBase64, "base64");
   const boundary = "----ImgBBBoundary" + Math.random().toString(36).slice(2);
   const partHeader = Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="image"; filename="staged.jpg"\r\nContent-Type: image/jpeg\r\n\r\n`, "utf8");
   const partFooter = Buffer.from(`\r\n--${boundary}--\r\n`, "utf8");
   const body = Buffer.concat([partHeader, imageBuffer, partFooter]);
-
   return new Promise((resolve, reject) => {
     const req = https.request({
       hostname: "api.imgbb.com",
       path: `/1/upload?key=${apiKey}&expiration=86400`,
       method: "POST",
-      headers: {
-        "Content-Type": `multipart/form-data; boundary=${boundary}`,
-        "Content-Length": body.length,
-      }
+      headers: { "Content-Type": `multipart/form-data; boundary=${boundary}`, "Content-Length": body.length }
     }, (res) => {
       const chunks = [];
       res.on("data", c => chunks.push(c));
@@ -94,7 +81,6 @@ async function uploadToImgBB(imageBase64, apiKey) {
   });
 }
 
-// ── FETCH URL AS BASE64 ───────────────────────────────────────────────────────
 async function fetchAsBase64(url, hops = 0) {
   return new Promise((resolve, reject) => {
     if (hops > 5) { reject(new Error("Too many redirects")); return; }
@@ -111,65 +97,40 @@ async function fetchAsBase64(url, hops = 0) {
   });
 }
 
-// ── STORE RESULT IN NETLIFY BLOBS ─────────────────────────────────────────────
-async function storeResult(jobId, data, token, siteId) {
-  const body = Buffer.from(JSON.stringify(data));
-  await new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: "api.netlify.com",
-      path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent("job-" + jobId)}`,
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "Content-Length": body.length,
-      }
-    }, (res) => { res.resume(); res.on("end", resolve); });
-    req.on("error", reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-// ── HANDLER ───────────────────────────────────────────────────────────────────
 exports.handler = async (event) => {
-  const token     = process.env.NETLIFY_ACCESS_TOKEN;
-  const siteId    = process.env.NETLIFY_SITE_ID;
   const openAIKey = process.env.OPENAI_API_KEY;
   const imgbbKey  = process.env.IMGBB_API_KEY;
-
-  console.log(`stage-openai-background env: siteId=${siteId?.slice(0,8)} token=${token?'present':'MISSING'} openai=${openAIKey?'present':'MISSING'} imgbb=${imgbbKey?'present':'MISSING'}`);
 
   let jobId;
   try {
     const { jobId: jId, imageBase64, mimeType, customPrompt } = JSON.parse(event.body);
     jobId = jId;
-    console.log(`Background job ${jobId} starting...`);
+    console.log(`Job ${jobId} starting...`);
 
     // Step 1: Call OpenAI
     const result = await callOpenAI(imageBase64, mimeType, customPrompt, openAIKey);
-    console.log(`Job ${jobId}: OpenAI complete`);
-
     const stagedBase64 = result?.data?.[0]?.b64_json;
     if (!stagedBase64) throw new Error("No image data in OpenAI response");
-    console.log(`Job ${jobId}: Result size ${Math.round(stagedBase64.length/1024)}KB`);
+    console.log(`Job ${jobId}: OpenAI complete ${Math.round(stagedBase64.length/1024)}KB`);
 
-    // Step 2: Upload to ImgBB — store URL not 2.5MB base64 in blob
+    // Step 2: Upload to ImgBB
     const imageUrl = await uploadToImgBB(stagedBase64, imgbbKey);
     console.log(`Job ${jobId}: ImgBB URL obtained`);
 
-    // Step 3: Fetch back as base64 for client (same as stage-decor8-background pattern)
+    // Step 3: Fetch back as base64
     const finalBase64 = await fetchAsBase64(imageUrl);
     console.log(`Job ${jobId}: Fetched back ${Math.round(finalBase64.length/1024)}KB`);
 
-    // Step 4: Store small result in Blobs — stagedBase64 included for client
-    await storeResult(jobId, { status: "done", stagedBase64: finalBase64, width: 1536, height: 1024 }, token, siteId);
-    console.log(`Job ${jobId}: Stored in Blobs`);
+    // Step 4: Store in Netlify Blobs via SDK
+    const store = getStore("staging-jobs");
+    await store.setJSON("job-" + jobId, { status: "done", stagedBase64: finalBase64, width: 1536, height: 1024 });
+    console.log(`Job ${jobId}: Stored via SDK`);
 
   } catch (err) {
     console.error(`Job ${jobId} error:`, err.message);
-    if (jobId && token && siteId) {
-      try { await storeResult(jobId, { status: "error", error: err.message }, token, siteId); } catch(e) {}
-    }
+    try {
+      const store = getStore("staging-jobs");
+      await store.setJSON("job-" + jobId, { status: "error", error: err.message });
+    } catch(e) {}
   }
 };

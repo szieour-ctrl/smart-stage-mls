@@ -1356,6 +1356,7 @@ async function stageRoom(roomId, iterNote) {
         imageBase64: sourceBase64,
         mimeType: sourceMime,
         customPrompt: finalPrompt || '',
+        siteId: window.NETLIFY_SITE_ID || null, // passed to background so blob writes to correct site
       })
     });
     // Background functions return 202 — any 2xx is a successful dispatch
@@ -1374,9 +1375,9 @@ async function stageRoom(roomId, iterNote) {
       await new Promise(r => setTimeout(r, 3000));
       const elapsed = (poll + 1) * 3;
       try {
-        const checkRes = await fetch(`/.netlify/functions/check-decor8?jobId=${encodeURIComponent(jobId)}`);
+        const checkRes = await fetch(`/.netlify/functions/check-openai?jobId=${encodeURIComponent(jobId)}`);
         const checkData = await checkRes.json().catch(() => ({}));
-        console.log(`Poll ${poll+1} (${elapsed}s): status=${checkData.status} size=${checkData.stagedBase64?.length||0}`);
+        console.log(`Poll ${poll+1} (${elapsed}s): status=${checkData.status} size=${checkData.stagedBase64?.length||0} keys=${Object.keys(checkData).join(',')}`);
         if (checkData.status === 'done' && checkData.stagedBase64) {
           decor8Data = checkData;
           break;

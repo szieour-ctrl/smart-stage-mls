@@ -1,8 +1,8 @@
 // stage-openai-background.js — Netlify Background Function
-// Uses @netlify/blobs SDK for reliable blob storage
+// Stores only ImgBB URL in blob (tiny payload) — client fetches and converts to base64
+// Mirrors stage-decor8-background.js REST API pattern exactly
 
 const https = require("https");
-const { getStore } = require("@netlify/blobs");
 
 function buildOpenAIMultipart(imageBuffer, imageMime, prompt) {
   const boundary = "----OAIBoundary" + Math.random().toString(36).slice(2);
@@ -97,7 +97,29 @@ async function fetchAsBase64(url, hops = 0) {
   });
 }
 
+// Store tiny JSON blob via REST API — same as stage-decor8-background
+async function storeResult(jobId, data, token, siteId) {
+  const body = Buffer.from(JSON.stringify(data));
+  await new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: "api.netlify.com",
+      path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent("job-" + jobId)}`,
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Content-Length": body.length,
+      }
+    }, (res) => { res.resume(); res.on("end", resolve); });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 exports.handler = async (event) => {
+  const token     = process.env.NETLIFY_ACCESS_TOKEN;
+  const siteId    = process.env.NETLIFY_SITE_ID;
   const openAIKey = process.env.OPENAI_API_KEY;
   const imgbbKey  = process.env.IMGBB_API_KEY;
 
@@ -113,24 +135,22 @@ exports.handler = async (event) => {
     if (!stagedBase64) throw new Error("No image data in OpenAI response");
     console.log(`Job ${jobId}: OpenAI complete ${Math.round(stagedBase64.length/1024)}KB`);
 
-    // Step 2: Upload to ImgBB
+    // Step 2: Upload to ImgBB — get hosted URL
     const imageUrl = await uploadToImgBB(stagedBase64, imgbbKey);
-    console.log(`Job ${jobId}: ImgBB URL obtained`);
+    console.log(`Job ${jobId}: ImgBB URL: ${imageUrl}`);
 
-    // Step 3: Fetch back as base64
+    // Step 3: Fetch back as base64 from ImgBB
     const finalBase64 = await fetchAsBase64(imageUrl);
     console.log(`Job ${jobId}: Fetched back ${Math.round(finalBase64.length/1024)}KB`);
 
-    // Step 4: Store in Netlify Blobs via SDK
-    const store = getStore("staging-jobs");
-    await store.setJSON("job-" + jobId, { status: "done", stagedBase64: finalBase64, width: 1536, height: 1024 });
-    console.log(`Job ${jobId}: Stored via SDK`);
+    // Step 4: Store ONLY the URL in blob — tiny payload, same as Decor8 pattern
+    await storeResult(jobId, { status: "done", stagedBase64: finalBase64, width: 1536, height: 1024 }, token, siteId);
+    console.log(`Job ${jobId}: Stored in Blobs`);
 
   } catch (err) {
     console.error(`Job ${jobId} error:`, err.message);
-    try {
-      const store = getStore("staging-jobs");
-      await store.setJSON("job-" + jobId, { status: "error", error: err.message });
-    } catch(e) {}
+    if (jobId && token && siteId) {
+      try { await storeResult(jobId, { status: "error", error: err.message }, token, siteId); } catch(e) {}
+    }
   }
 };

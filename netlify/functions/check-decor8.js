@@ -22,30 +22,54 @@ function httpsGet(urlOrOptions) {
 }
 
 async function getResult(jobId, token, siteId) {
-  // Use ?raw=true to get blob content directly — avoids signed URL expiry issues
-  const res = await httpsGet({
+  // Step 1: Get metadata envelope from Netlify Blobs API
+  const metaRes = await httpsGet({
     hostname: "api.netlify.com",
-    path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent("job-" + jobId)}?raw=true`,
+    path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent("job-" + jobId)}`,
     method: "GET",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
   });
 
-  console.log(`Blob GET status: ${res.status} size: ${res.body.length}`);
+  console.log(`Blob meta status: ${metaRes.status} size: ${metaRes.body.length}`);
+  if (metaRes.status === 404) return null;
+  if (metaRes.status !== 200) return null;
 
-  if (res.status === 404) return null;
-  if (res.status !== 200) {
-    console.log(`Blob error body: ${res.body.slice(0, 200)}`);
-    return null;
+  let meta;
+  try { meta = JSON.parse(metaRes.body); }
+  catch(e) { console.error("Meta parse error:", e.message); return null; }
+
+  console.log(`Meta keys: ${Object.keys(meta).join(',')}`);
+
+  // If direct blob content (has status field) — return it
+  if (meta.status) {
+    console.log(`Direct content: status=${meta.status} stagedBase64=${meta.stagedBase64?.length||0}`);
+    return meta;
   }
 
-  try {
-    const parsed = JSON.parse(res.body);
-    console.log(`Blob status: ${parsed.status} stagedBase64 length: ${parsed.stagedBase64?.length || 0}`);
-    return parsed;
-  } catch(e) {
-    console.error(`Blob parse error: ${e.message} body: ${res.body.slice(0, 200)}`);
-    return null;
+  // Metadata envelope — follow signed S3 URL to get actual content
+  if (meta.url) {
+    console.log(`Following S3 URL: ${meta.url.slice(0,80)}`);
+    const s3Url = new URL(meta.url);
+    const dataRes = await httpsGet({
+      hostname: s3Url.hostname,
+      path: s3Url.pathname + s3Url.search,
+      method: "GET",
+      headers: { "Accept": "*/*" }
+    });
+    console.log(`S3 response: ${dataRes.status} size: ${dataRes.body.length}`);
+    if (dataRes.status !== 200) return null;
+    try {
+      const parsed = JSON.parse(dataRes.body);
+      console.log(`S3 content: status=${parsed.status} stagedBase64=${parsed.stagedBase64?.length||0}`);
+      return parsed;
+    } catch(e) {
+      console.error("S3 parse error:", e.message, "body:", dataRes.body.slice(0,100));
+      return null;
+    }
   }
+
+  console.log("No status or url in meta — returning null");
+  return null;
 }
 
 exports.handler = async (event) => {

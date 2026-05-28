@@ -29,6 +29,9 @@
 [functions."stage-openai-background"]
   timeout = 900
 
+[functions."check-openai"]
+  timeout = 10
+
 [functions."extract-staging-dna"]
   timeout = 15
 

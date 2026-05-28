@@ -22,37 +22,30 @@ function httpsGet(urlOrOptions) {
 }
 
 async function getResult(jobId, token, siteId) {
-  // Step 1: Get blob metadata — returns JSON with signed URL
-  const metaRes = await httpsGet({
+  // Use ?raw=true to get blob content directly — avoids signed URL expiry issues
+  const res = await httpsGet({
     hostname: "api.netlify.com",
-    path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent("job-" + jobId)}`,
+    path: `/api/v1/sites/${siteId}/blobs/${encodeURIComponent("job-" + jobId)}?raw=true`,
     method: "GET",
     headers: { Authorization: `Bearer ${token}`, Accept: "application/json" }
   });
 
-  console.log(`Blob meta status: ${metaRes.status} size: ${metaRes.body.length}`);
+  console.log(`Blob GET status: ${res.status} size: ${res.body.length}`);
 
-  if (metaRes.status === 404) return null;
-
-  // Try parsing as direct JSON first (old blob format)
-  try {
-    const direct = JSON.parse(metaRes.body);
-    if (direct.status) {
-      console.log(`Direct blob status: ${direct.status} stagedBase64 length: ${direct.stagedBase64?.length || 0}`);
-      return direct;
-    }
-    // If it has a url field, it's a metadata envelope — follow the URL
-    if (direct.url) {
-      console.log(`Following signed URL: ${direct.url.slice(0, 80)}`);
-      const dataRes = await httpsGet(new URL(direct.url));
-      console.log(`Signed URL response: ${dataRes.status} size: ${dataRes.body.length}`);
-      return JSON.parse(dataRes.body);
-    }
-  } catch(e) {
-    console.log(`Parse attempt failed: ${e.message} — body preview: ${metaRes.body.slice(0, 200)}`);
+  if (res.status === 404) return null;
+  if (res.status !== 200) {
+    console.log(`Blob error body: ${res.body.slice(0, 200)}`);
+    return null;
   }
 
-  return null;
+  try {
+    const parsed = JSON.parse(res.body);
+    console.log(`Blob status: ${parsed.status} stagedBase64 length: ${parsed.stagedBase64?.length || 0}`);
+    return parsed;
+  } catch(e) {
+    console.error(`Blob parse error: ${e.message} body: ${res.body.slice(0, 200)}`);
+    return null;
+  }
 }
 
 exports.handler = async (event) => {

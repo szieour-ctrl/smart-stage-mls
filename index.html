@@ -1342,25 +1342,27 @@ async function stageRoom(roomId, iterNote) {
     }
     const finalPrompt = approvedPrompt; // may be edited text or '' for no-prompt mode
 
-    // Step 2: Dispatch to OpenAI background job — returns jobId immediately
+    // Step 2: Call background function directly — returns 202 immediately
     room.promptStatus = 'Sending to OpenAI — starting job...';
     renderRoomQueue();
 
-    const dispatchRes = await fetch('/.netlify/functions/stage-openai', {
+    const jobId = "oai-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+
+    const dispatchRes = await fetch('/.netlify/functions/stage-openai-background', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        jobId,
         imageBase64: sourceBase64,
         mimeType: sourceMime,
         customPrompt: finalPrompt || '',
       })
     });
-    if (!dispatchRes.ok) {
+    // Background functions return 202 — any 2xx is a successful dispatch
+    if (dispatchRes.status !== 202 && !dispatchRes.ok) {
       const d = await dispatchRes.json().catch(() => ({}));
       throw new Error('OpenAI job dispatch failed: ' + (d.error || dispatchRes.status));
     }
-    const { jobId } = await dispatchRes.json();
-    if (!jobId) throw new Error('No jobId returned from stage-openai');
 
     // Step 3: Poll check-decor8 every 4 seconds — up to 150 seconds total
     room.promptStatus = 'OpenAI staging in progress — takes ~60–90 seconds...';
@@ -1381,13 +1383,11 @@ async function stageRoom(roomId, iterNote) {
         if (checkData.status === 'error') {
           throw new Error('OpenAI staging failed: ' + (checkData.error || 'unknown error'));
         }
-        // status === 'pending' — keep polling
         const elapsed = (poll + 1) * 4;
         room.promptStatus = `OpenAI staging in progress — ${elapsed}s elapsed...`;
         renderRoomQueue();
       } catch(pollErr) {
         if (pollErr.message.startsWith('OpenAI staging failed')) throw pollErr;
-        // Network blip — continue polling
       }
     }
     if (!decor8Data?.stagedBase64) throw new Error('OpenAI staging timed out after 150 seconds');

@@ -94,12 +94,18 @@ exports.handler = async (event) => {
   const siteId   = process.env.NETLIFY_SITE_ID;
   const openAIKey = process.env.OPENAI_API_KEY;
 
+  console.log(`stage-openai-background env: siteId=${siteId ? siteId.slice(0,8)+'...' : 'MISSING'} token=${token ? 'present' : 'MISSING'} openai=${openAIKey ? 'present' : 'MISSING'}`);
+
   let jobId;
   try {
-    const { jobId: jId, imageBase64, mimeType, customPrompt } = JSON.parse(event.body);
+    const { jobId: jId, imageBase64, mimeType, customPrompt, siteId: payloadSiteId } = JSON.parse(event.body);
     jobId = jId;
 
-    console.log(`Background job ${jobId} starting...`);
+    // Use siteId from payload if provided — ensures blob is written to the same
+    // site that check-decor8 reads from (avoids cross-site blob mismatch)
+    const writeSiteId = payloadSiteId || siteId;
+
+    console.log(`Background job ${jobId} starting... writeSiteId=${writeSiteId?.slice(0,8)}`);
 
     // Call OpenAI — no timeout wall in background functions
     const result = await callOpenAI(imageBase64, mimeType, customPrompt, openAIKey);
@@ -112,8 +118,8 @@ exports.handler = async (event) => {
     console.log(`Job ${jobId}: Result size ${Math.round(stagedBase64.length/1024)}KB`);
 
     // Store success in Blobs — check-decor8.js will return this to client
-    await storeResult(jobId, { status: "done", stagedBase64, width: 1536, height: 1024 }, token, siteId);
-    console.log(`Job ${jobId}: Stored in Blobs`);
+    await storeResult(jobId, { status: "done", stagedBase64, width: 1536, height: 1024 }, token, writeSiteId);
+    console.log(`Job ${jobId}: Stored in Blobs siteId=${writeSiteId?.slice(0,8)}`);
 
   } catch (err) {
     console.error(`Job ${jobId} error:`, err.message);

@@ -57,14 +57,6 @@ function buildMultipart(imageBuffer, mimeType, prompt) {
     "utf8"
   ));
 
-  // response_format — b64_json so we get base64 back directly
-  parts.push(Buffer.from(
-    `--${boundary}${crlf}` +
-    `Content-Disposition: form-data; name="response_format"${crlf}${crlf}` +
-    `b64_json${crlf}`,
-    "utf8"
-  ));
-
   // closing boundary
   parts.push(Buffer.from(`--${boundary}--${crlf}`, "utf8"));
 
@@ -112,6 +104,23 @@ async function callOpenAI(imageBase64, mimeType, prompt, apiKey) {
   });
 }
 
+// ── FETCH URL AS BASE64 (fallback if OpenAI returns URL instead of b64_json) ──
+async function fetchAsBase64(url, hops = 0) {
+  return new Promise((resolve, reject) => {
+    if (hops > 5) { reject(new Error("Too many redirects")); return; }
+    const u = new URL(url);
+    https.request({ hostname: u.hostname, path: u.pathname + u.search, method: "GET" }, (res) => {
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        fetchAsBase64(res.headers.location, hops + 1).then(resolve).catch(reject);
+        return;
+      }
+      const chunks = [];
+      res.on("data", c => chunks.push(c));
+      res.on("end", () => resolve(Buffer.concat(chunks).toString("base64")));
+    }).on("error", reject).end();
+  });
+}
+
 // ── HANDLER ───────────────────────────────────────────────────────────────────
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
@@ -133,8 +142,19 @@ exports.handler = async (event) => {
     const result = await callOpenAI(imageBase64, mimeType, customPrompt, openAIKey);
 
     // gpt-image-1 returns: { data: [{ b64_json: "..." }] }
-    const stagedBase64 = result?.data?.[0]?.b64_json;
-    if (!stagedBase64) throw new Error("No image returned from OpenAI: " + JSON.stringify(result).slice(0, 200));
+    // Log full response shape for debugging on first deploy
+    console.log("OpenAI response keys:", Object.keys(result || {}));
+    console.log("OpenAI data[0] keys:", Object.keys(result?.data?.[0] || {}));
+
+    let stagedBase64 = result?.data?.[0]?.b64_json;
+
+    // Fallback: if URL returned instead of b64_json, fetch and convert
+    if (!stagedBase64 && result?.data?.[0]?.url) {
+      console.log("OpenAI returned URL — fetching as base64...");
+      stagedBase64 = await fetchAsBase64(result.data[0].url);
+    }
+
+    if (!stagedBase64) throw new Error("No image returned from OpenAI: " + JSON.stringify(result).slice(0, 300));
 
     console.log("OpenAI staging complete. Result size:", Math.round(stagedBase64.length / 1024), "KB");
 
